@@ -1,5 +1,6 @@
 mod server;
-mod error;
+mod types;
+mod constants;
 
 use server::listener::{spawn_tcp_listener};
 

@@ -4,10 +4,6 @@ pub struct InternalError {
     stack_trace: Vec<String>
 }
 
-pub enum InternalErrorKind {
-    TcpConnection
-}
-
 impl InternalError {
     pub fn new(kind: InternalErrorKind, message: String) -> Self {
         Self {
@@ -26,6 +22,10 @@ impl InternalError {
             println!("-- {}", signature);
         }
     }
+}
+
+pub enum InternalErrorKind {
+    TcpConnection
 }
 
 impl InternalErrorKind {

@@ -1,12 +1,10 @@
 use std::net::{TcpListener, TcpStream};
-
-use crate::error::types::{InternalError, InternalErrorKind};
-
-const BIND_PORT: &str = "127.0.0.1:1999";
+use crate::constants::{TCP_BIND_PORT};
+use crate::types::{InternalError, InternalErrorKind};
 
 pub fn spawn_tcp_listener() -> Result<(), InternalError> {
     // WARNING: this function blocks the execution thread
-    let listener = match TcpListener::bind(BIND_PORT) {
+    let listener = match TcpListener::bind(TCP_BIND_PORT) {
         Ok(tcp_listener) => tcp_listener,
         Err(_) => {
             let mut error = InternalError::new(
@@ -19,8 +17,10 @@ pub fn spawn_tcp_listener() -> Result<(), InternalError> {
     };
     
     for stream in listener.incoming() {
-        println!("Received stream of data")
+        println!("Received stream of data");
     }
 
     Ok(())
 }
+
+// pub fn handle incoming stream
