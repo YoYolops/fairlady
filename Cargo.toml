@@ -1,6 +1,11 @@
-[package]
-name = "bookeeper"
-version = "0.1.0"
-edition = "2024"
+[workspace]
 
-[dependencies]
+members = [
+    "client",
+    "server",
+    "core",
+]
+
+[workspace.dependencies]
+anyhow = { workspace = true } 
+tokio = { workspace = true } 

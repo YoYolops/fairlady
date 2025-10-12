@@ -1,1 +1,10 @@
-/target
+# Corrected: Ignores the 'target' directory at any depth.
+**/target/
+
+# Ignores Cargo.lock files everywhere except the root's Cargo.lock.
+# This assumes the .gitignore is in the root where the main Cargo.lock lives.
+**/Cargo.lock 
+
+# Ignores local environment variable files.
+.env
+.env.*
