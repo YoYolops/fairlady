@@ -1,11 +1,6 @@
 [workspace]
-
-members = [
-    "client",
-    "server",
-    "core",
-]
+members = ["client", "server", "core"]
 
 [workspace.dependencies]
-anyhow = { workspace = true } 
-tokio = { workspace = true } 
+anyhow = "1.0.100"
+tokio = "1.47.1"

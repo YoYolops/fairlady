@@ -1,4 +1,4 @@
-# Corrected: Ignores the 'target' directory at any depth.
+# Ignores the 'target' directory at any depth.
 **/target/
 
 # Ignores Cargo.lock files everywhere except the root's Cargo.lock.
@@ -8,3 +8,7 @@
 # Ignores local environment variable files.
 .env
 .env.*
+
+# Added by cargo
+
+/target
