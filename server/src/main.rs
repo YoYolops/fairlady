@@ -1,9 +1,10 @@
-use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
+use tokio::io::{self, AsyncReadExt};
 use tokio::net::TcpListener;
+use core::constants::TCP_SERVER_ADDR;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:1999").await?;
+    let listener = TcpListener::bind(TCP_SERVER_ADDR).await?;
 
     loop {
         let (mut socket, _) = listener.accept().await?;
@@ -17,11 +18,9 @@ async fn main() -> io::Result<()> {
                     // closed
                     Ok(0) => return,
                     Ok(n) => {
-                        // Copy the data back to socket
-                        if socket.write_all(&buf[..n]).await.is_err() {
-                            // Unexpected socket error. There isn't much we can
-                            // do here so just stop processing.
-                            return;
+                        match std::str::from_utf8(&buf[..n]) {
+                            Ok(s) => println!("RECEIVED: {}", s),
+                            Err(e) => eprintln!("Received invalid UTF-8: {}", e),
                         }
                     }
                     Err(_) => {
