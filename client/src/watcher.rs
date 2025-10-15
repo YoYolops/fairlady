@@ -21,6 +21,7 @@ pub async fn watch_folder(tokio_tx: Sender<Result<Event>>) -> Result<()> {
                 bail!("Folder watcher failed to send event to tokio runtime")
             }
         };
+        println!("THIS SHOULD PROBABLY AN ERROR | there is no senders to listen to in folder watcher");
         Ok(())
     }).await??;
     Ok(())
