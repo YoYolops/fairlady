@@ -4,3 +4,4 @@ members = ["client", "server", "core"]
 [workspace.dependencies]
 anyhow = "1.0.100"
 tokio = { version = "1.47.1", features = ["full"] }
+notify = { version = "8.1.0", features = ["serde"] }

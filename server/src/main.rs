@@ -19,7 +19,7 @@ async fn main() -> io::Result<()> {
                     Ok(0) => return,
                     Ok(n) => {
                         match std::str::from_utf8(&buf[..n]) {
-                            Ok(s) => println!("RECEIVED: {}", s),
+                            Ok(s) => println!("SERVER RECEIVED: {}", s),
                             Err(e) => eprintln!("Received invalid UTF-8: {}", e),
                         }
                     }
