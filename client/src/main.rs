@@ -1,29 +1,37 @@
 mod watcher;
+mod dispatcher;
 
 use watcher::spawn_watcher;
-use tokio::io::{self, AsyncWriteExt};
+use tokio::io::{AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
 use core::constants::TCP_SERVER_ADDR;
 use tokio::task::JoinHandle;
 use anyhow::Result;
+
+use crate::dispatcher::spawn_dispatcher;
+
 #[tokio::main]
-async fn main() -> io::Result<()> {
+async fn main() -> Result<()> {
     let mut stream = TcpStream::connect(TCP_SERVER_ADDR).await?;
-    let (tokio_tx, mut tokio_rx) = mpsc::channel(32);
-    let folder_watcher_handle: JoinHandle<Result<()>> = spawn_watcher(tokio_tx).await;
+    let (fs_event_tx, fs_event_rx) = mpsc::channel(32);
+    let (network_tx, mut network_rx) = mpsc::channel(32);
+
+    let folder_watcher_handle: JoinHandle<Result<()>> = spawn_watcher(fs_event_tx).await;
+    let _dispatcher_handler: JoinHandle<Result<()>> = spawn_dispatcher(fs_event_rx, network_tx).await;
 
     tokio::spawn(async move {
-        // Since the only way of this stop receiving messages is by file watcher thread death,
-        // and that is already covered below, i'll live this one loose
-        while let Some(event) = tokio_rx.recv().await {
-            println!("Received event from folder watcher: {:?}", event)
+        // Listenn and sends via tcp
+        while let Some(event) = network_rx.recv().await {
+            let text_event = format!("Received event from folder watcher: {:?}", event);
+            if let Err(e) = stream.write_all(text_event.as_bytes()).await {
+                println!("");
+                println!("{:?}", e);
+                println!("");
+            };
         }
     });
 
-    println!("CLIENT says hi");
-    let example_message = "Hello there everyone :)".as_bytes();
-    stream.write_all(example_message).await?;
     match folder_watcher_handle.await {
         Ok(_) =>
             println!("CUMULUS Client gracefully exiting without errors. This is odd since the expectation is for it to live forever"),
