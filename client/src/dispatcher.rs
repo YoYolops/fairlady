@@ -18,7 +18,7 @@ type NetworkSender = Sender<String>;
 pub async fn spawn_dispatcher(mut rx_channel: FsEventReceiver, tx_channel: NetworkSender) -> JoinHandle<Result<()>> {
     tokio::spawn(async move {
         while let Some(event) = rx_channel.recv().await {
-            let packet = dispatch_fs_event(event).await?;
+            let packet: String = dispatch_fs_event(event).await?;
             tx_channel.send(packet).await?;
         };
         bail!("")
@@ -32,27 +32,27 @@ async fn dispatch_fs_event(fs_event: Event) -> Result<String> {
     let network_packet = match fs_event.kind {
         Any => {
             println!("DISPATCHER ANY");
-            String::from("DISPATCHER ANY")
+            String::from("ANY")
         },
         Access(access_kind) => {
             println!("DISPATCHER ACCESS: {:?}", access_kind);
-            String::from(format!("DISPATCHER ACCESS: {:?}", access_kind))
+            String::from(format!("ACCESS: {:?}", access_kind))
         },
         Create(create_kind) => {
             println!("DISPATCHER CREATE: {:?}", create_kind);
-            String::from(format!("DISPATCHER CREATE: {:?}", create_kind))
+            String::from(format!("CREATE: {:?}", create_kind))
         },
         Modify(modify_kind) => {
             println!("DISPATCHER MODIFY: {:?}", modify_kind);
-            String::from(format!("DISPATCHER MODIFY: {:?}", modify_kind))
+            String::from(format!("MODIFY: {:?}", modify_kind))
         },
         Remove(remove_kind) => {
             println!("DISPATCHER MODIFY: {:?}", remove_kind);
-            String::from(format!("DISPATCHER MODIFY: {:?}", remove_kind))
+            String::from(format!("MODIFY: {:?}", remove_kind))
         },
         Other => {
             println!("DISPATCHER OTHER");
-            String::from("DISPATCHER OTHER")
+            String::from("OTHER")
         }
     };
     Ok(network_packet)

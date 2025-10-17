@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
     tokio::spawn(async move {
         // Listenn and sends via tcp
         while let Some(event) = network_rx.recv().await {
-            let text_event = format!("Received event from folder watcher: {:?}", event);
+            let text_event = format!("{:?}", event);
             if let Err(e) = stream.write_all(text_event.as_bytes()).await {
                 println!("");
                 println!("{:?}", e);
