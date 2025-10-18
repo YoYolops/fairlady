@@ -15,7 +15,9 @@ Firstly, we are goig to encrypt, somehow, the user data. As of right now, we hav
 ### Known Issues
 1. When a file/folder is sent to the trash bin, it fires a `Modify(Name(From))`, instead of a Remove event. So it won't be catched by the Remove match arm. In addition, the app does not send a request to server on `Modify(Name(From))`, only on `Modify(Name(Both))`, which represents a rename. In other words, sending a file to the trash bin would be completely missed by our system. This shows the need for an extra algorithm to ensure consistency between client and server
 
+2. The paths strings are arriving badly formatted on the server
 ### Commit Classes:
 Prototype:
 Feature:
 Improve:
+Update:
