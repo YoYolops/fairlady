@@ -1,6 +1,6 @@
 use notify::{Event, RecursiveMode, Watcher};
 use std::path::Path;
-use core::{constants::OBSERVED_FOLDER_PATH_STRING, Result};
+use core::{constants::OBSERVED_FOLDER_PATH_STRING, logger, Result};
 use anyhow::{bail, Context};
 use tokio::{sync::mpsc::Sender, task::JoinHandle};
 
@@ -11,8 +11,8 @@ pub async fn spawn_watcher(tx_async: FsEventSender) -> JoinHandle<Result<()>> {
         let mut max_retry: u8 = 3;
         while max_retry > 0 && let Err(e) = watch_folder(tx_async.clone()).await {
             max_retry -= 1;
-            println!("{:?}", e);
-            println!("Folder watcher thread died, retrying...");
+            logger::error(format!("{:?}", e));
+            logger::info(String::from("Folder watcher thread died, retrying..."));
         };
         bail!("Folder watcher could not be spawned")
     })
@@ -27,7 +27,10 @@ async fn watch_folder(tx_async: FsEventSender) -> Result<()> {
                 .context("Failed to spawn notify watcher")?;
 
             watcher
-                .watch(Path::new(OBSERVED_FOLDER_PATH_STRING), RecursiveMode::Recursive)
+                .watch(
+                    Path::new(OBSERVED_FOLDER_PATH_STRING),
+                    RecursiveMode::Recursive
+                )
                 .context("Failed to watch observed folder")?;
 
             while let Ok(event) = rx_sync.recv() {

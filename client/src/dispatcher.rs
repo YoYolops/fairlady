@@ -8,7 +8,7 @@ use tokio::{
     sync::mpsc::{Receiver, Sender},
 };
 use notify::{Event};
-use crate::client_utils::create_request_from_event;
+use crate::fs_adapter::create_request_from_event;
 
 type FsEventReceiver = Receiver<Event>;
 // Here we will use our protocol

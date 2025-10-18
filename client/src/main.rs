@@ -1,6 +1,6 @@
 mod watcher;
 mod dispatcher;
-mod client_utils;
+mod fs_adapter;
 
 use watcher::spawn_watcher;
 use tokio::{
