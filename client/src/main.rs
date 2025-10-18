@@ -1,6 +1,6 @@
 mod watcher;
 mod dispatcher;
-mod event_adapter;
+mod client_utils;
 
 use watcher::spawn_watcher;
 use tokio::{
@@ -14,7 +14,7 @@ use core::{
     Result
 };
 
-use crate::dispatcher::spawn_dispatcher;
+use dispatcher::spawn_dispatcher;
 
 #[tokio::main]
 async fn main() -> Result<()> {

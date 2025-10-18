@@ -1,16 +1,14 @@
 // Dispatcher must decide the operations to do over the event and how to parse data.
 // He must be the one who calls TCP sender (?)
 
-use anyhow::bail;
-use core::Result;
+use anyhow::{bail};
+use core::{logger, Result};
 use tokio::{
     task::JoinHandle,
     sync::mpsc::{Receiver, Sender},
 };
-use notify::{
-    Event, 
-    EventKind::{Create, Modify, Remove}
-};
+use notify::{Event};
+use crate::client_utils::create_request_from_event;
 
 type FsEventReceiver = Receiver<Event>;
 // Here we will use our protocol
@@ -20,11 +18,13 @@ type DispatchResult = Result<Option<String>>;
 pub async fn spawn_dispatcher(mut rx_channel: FsEventReceiver, tx_channel: NetworkSender) -> JoinHandle<Result<()>> {
     tokio::spawn(async move {
         while let Some(event) = rx_channel.recv().await {
+            println!();
             let dispatch_value: Option<String> = dispatch_fs_event(event).await?;
             match dispatch_value {
                 Some(message) => tx_channel.send(message).await?,
-                None => println!("An irrelevant fs event was notified, ignoring..."),
+                None => println!("No data was sent to server for this event"),
             }
+            println!();
         };
         bail!("")
     })
@@ -34,27 +34,12 @@ async fn dispatch_fs_event(fs_event: Event) -> DispatchResult {
     // Preprocess and turn them into a network request to sync data, or update, or create etc
     // The request will be parsed to binary inside spawn_dispatcher
     // The parsed to binary request will be sent through mpsc channel also by spawn_dispatcher
-    Ok(
-        match fs_event.kind {
-            Create(create_kind) => {
-                println!("DISPATCHER CREATE: {:?}", create_kind);
-                Some(
-                    String::from(format!("CREATE: {:?}", create_kind))
-                )
-            },
-            Modify(modify_kind) => {
-                println!("DISPATCHER MODIFY: {:?}", modify_kind);
-                Some(
-                    String::from(format!("MODIFY: {:?}", modify_kind))
-                )
-            },
-            Remove(remove_kind) => {
-                println!("DISPATCHER MODIFY: {:?}", remove_kind);
-                Some(
-                    String::from(format!("MODIFY: {:?}", remove_kind))
-                )
-            },
-            _ => None,
+    logger::info(format!("{:?}", fs_event));
+    match create_request_from_event(fs_event).await {
+        Ok(protocol) => Ok(Some(format!("{:?}", protocol))),
+        Err(e) => {
+            logger::error(format!("{:?}", e));
+            Ok(None)
         }
-    )
+    }
 }
