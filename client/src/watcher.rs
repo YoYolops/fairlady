@@ -1,9 +1,8 @@
 use notify::{Event, RecursiveMode, Watcher};
 use std::path::Path;
-use core::constants::OBSERVED_FOLDER_PATH_STRING;
-use anyhow::{bail, Context, Result};
-use tokio::sync::mpsc::Sender;
-use tokio::task::JoinHandle;
+use core::{constants::OBSERVED_FOLDER_PATH_STRING, Result};
+use anyhow::{bail, Context};
+use tokio::{sync::mpsc::Sender, task::JoinHandle};
 
 type FsEventSender = Sender<Event>;
 

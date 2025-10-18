@@ -75,6 +75,10 @@ dependencies = [
 [[package]]
 name = "core"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "notify",
+]
 
 [[package]]
 name = "fsevent-sys"

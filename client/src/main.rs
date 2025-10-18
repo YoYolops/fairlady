@@ -1,13 +1,18 @@
 mod watcher;
 mod dispatcher;
+mod event_adapter;
 
 use watcher::spawn_watcher;
-use tokio::io::{AsyncWriteExt};
-use tokio::net::TcpStream;
-use tokio::sync::mpsc;
-use core::constants::TCP_SERVER_ADDR;
-use tokio::task::JoinHandle;
-use anyhow::Result;
+use tokio::{
+    io::AsyncWriteExt,
+    net::TcpStream,
+    sync::mpsc,
+    task::JoinHandle
+};
+use core::{
+    constants::TCP_SERVER_ADDR,
+    Result
+};
 
 use crate::dispatcher::spawn_dispatcher;
 

@@ -1,7 +1,8 @@
 // Dispatcher must decide the operations to do over the event and how to parse data.
 // He must be the one who calls TCP sender (?)
 
-use anyhow::{bail, Result};
+use anyhow::bail;
+use core::Result;
 use tokio::{
     task::JoinHandle,
     sync::mpsc::{Receiver, Sender},
@@ -33,26 +34,27 @@ async fn dispatch_fs_event(fs_event: Event) -> DispatchResult {
     // Preprocess and turn them into a network request to sync data, or update, or create etc
     // The request will be parsed to binary inside spawn_dispatcher
     // The parsed to binary request will be sent through mpsc channel also by spawn_dispatcher
-    let network_packet = match fs_event.kind {
-        Create(create_kind) => {
-            println!("DISPATCHER CREATE: {:?}", create_kind);
-            Some(
-                String::from(format!("CREATE: {:?}", create_kind))
-            )
-        },
-        Modify(modify_kind) => {
-            println!("DISPATCHER MODIFY: {:?}", modify_kind);
-            Some(
-                String::from(format!("MODIFY: {:?}", modify_kind))
-            )
-        },
-        Remove(remove_kind) => {
-            println!("DISPATCHER MODIFY: {:?}", remove_kind);
-            Some(
-                String::from(format!("MODIFY: {:?}", remove_kind))
-            )
-        },
-        _ => None,
-    };
-    Ok(network_packet)
+    Ok(
+        match fs_event.kind {
+            Create(create_kind) => {
+                println!("DISPATCHER CREATE: {:?}", create_kind);
+                Some(
+                    String::from(format!("CREATE: {:?}", create_kind))
+                )
+            },
+            Modify(modify_kind) => {
+                println!("DISPATCHER MODIFY: {:?}", modify_kind);
+                Some(
+                    String::from(format!("MODIFY: {:?}", modify_kind))
+                )
+            },
+            Remove(remove_kind) => {
+                println!("DISPATCHER MODIFY: {:?}", remove_kind);
+                Some(
+                    String::from(format!("MODIFY: {:?}", remove_kind))
+                )
+            },
+            _ => None,
+        }
+    )
 }
