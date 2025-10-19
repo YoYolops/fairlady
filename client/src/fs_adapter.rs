@@ -54,7 +54,7 @@ fn build_request_from_modify_event(modify_kind: &ModifyKind, event: &Event) -> R
         ModifyKind::Data(_) => {
             NimbusProtocol::Request(
                 InterApplicationRequest::UPDATE {
-                    path: String::from("path"),
+                    path: format!("{:?}", event.paths[0]),
                     data: Vec::from(b"hello")
                 }
             )
@@ -64,10 +64,10 @@ fn build_request_from_modify_event(modify_kind: &ModifyKind, event: &Event) -> R
     Ok(protocol)
 }
 
-fn build_request_from_remove_event() -> NimbusProtocol {
+fn build_request_from_remove_event(event: &Event) -> NimbusProtocol {
     NimbusProtocol::Request(
         InterApplicationRequest::UPDATE {
-            path: String::from("path"),
+            path: format!("{:?}", event.paths[0]),
             data: Vec::from(b"hello")
         }
     )

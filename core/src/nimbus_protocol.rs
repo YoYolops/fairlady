@@ -38,7 +38,7 @@ pub enum NimbusProtocol {
 impl NimbusProtocol {
     pub fn encode(&self) -> Result<Vec<u8>> {
         bincode::encode_to_vec(self, BINCODE_CONFIG)
-            .context("EXTERNAL LIBRARY FAILURE: bincode failed to encode_to_vec")
+            .context("External library BINCODE failed to encode_to_vec")
     }
 
     pub fn decode(bin_vec: &[u8]) -> Result<NimbusProtocol> {

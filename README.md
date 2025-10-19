@@ -1,29 +1,4 @@
-Uma rede replicante. Seu objetivo principal é armazenar dados de um client em um server, com segurança (criptografia de ponta a ponta) e escalabilidade;
-
-### FONTS:
-large scale folder watching: https://github.com/notify-rs/notify/issues/412
-
-# DECISIONS:
-1. Using big endian to serialize `NimbusProtocol`
-
-### How to detect real changes?
-Thats hard...
-Firstly, we are goig to encrypt, somehow, the user data. As of right now, we have two main strategies:
-    1. Any change in the watched folder fires a server request with the entire folder content ecrypted.
-        - Performance issues, specially for huge file trees
-    2. We choose to only encript data itself, preserving folder structure and file/folder names, and detecting changes by traversing the file tree on events.
-
-### Known Issues
-1. When a file/folder is sent to the trash bin, it fires a `Modify(Name(From))`, instead of a Remove event. So it won't be catched by the Remove match arm. In addition, the app does not send a request to server on `Modify(Name(From))`, only on `Modify(Name(Both))`, which represents a rename. In other words, sending a file to the trash bin would be completely missed by our system. This shows the need for an extra algorithm to ensure consistency between client and server
-
-2. The paths strings for some request kids are arriving badly formatted on the server
--> SOLUTION: We were sending the struct across the network. We need to parse it before sending
-
-3. We are, in a first moment, building everything entirely for **LINUX**. No tests were made in another O.S., and it is very important to do so, since different file system might result in remarkable differences in notifications fired.
-
-4. BROKEN PIPE: when connection with the server is lost, client fails almost silently. TCP connection loss is not handled. The following error will be printed by the client in such event: `Os { code: 32, kind: BrokenPipe, message: "Broken pipe" }`
-
-5. MAIN currently does not account for it's main task's health. Main tasks are core to the system. They must be watched, if any task returns with an error, the entire app might need to stop and log the error. Otherwise, main tasks may fail silently.
+Building blocks for a replicant network. Its main goal i storing data from a client into a server. Focused on safety (end to end encrypting) and scalability. 
 
 # Marks
 ## MARK I: Oct 19, 2025;
@@ -39,6 +14,29 @@ Lets talk about the **MARK I** features and upgrades:
 
 I think that's worth a release, consider ourselves in client@0.1.1
 
+# DECISIONS:
+1. Using big endian to serialize `NimbusProtocol`
+
+### How to detect real changes?
+Thats hard...
+Firstly, we are goig to encrypt, somehow, the user data. As of right now, we have two main strategies:
+    1. Any change in the watched folder fires a server request with the entire folder content ecrypted.
+        - Performance issues, specially for huge file trees
+    2. We choose to only encript data itself, preserving folder structure and file/folder names, and detecting changes by traversing the file tree on events.
+
+# To do
+1. **ACCOUNT FOR SILENT REMOVAL:** When a file/folder is sent to the trash bin, it fires a `Modify(Name(From))`, instead of a Remove event. So it won't be catched by the Remove match arm. In addition, the app does not send a request to server on `Modify(Name(From))`, only on `Modify(Name(Both))`, which represents a rename. In other words, sending a file to the trash bin would be completely missed by our system. This shows the need for an extra algorithm to ensure consistency between client and server
+
+2. [SOLVED] - **FIX PATHSTRING ARRIVING BADLY FORMATTED ON THE SERVER:** The paths strings for some request kids are arriving badly formatted on the server
+
+3. **TEST IN WINDOWS:** We are, in a first moment, building everything entirely for **LINUX**. No tests were made in another O.S., and it is very important to do so, since different file system might result in remarkable differences in notifications fired.
+
+4. **FIX BROKEN PIPE:** when connection with the server is lost, client fails almost silently. TCP connection loss is not handled. The following error will be printed by the client in such event: `Os { code: 32, kind: BrokenPipe, message: "Broken pipe" }`
+
+5. **IMPROVE MAIN FUNCTION:** currently, it does not account for it's main task's health. Main tasks are core to the system. They must be watched, if any task returns with an error, the entire app might need to stop and log the error. Otherwise, main tasks may fail silently.
+
+6. **INFORM THE AMOUNT OF BYTES TRANSITING VIA TCP CONNECTION:** otherwise the other end won't know how many bytes should decode and might try to parse an invalid sequence
+
 ### Commit Classes:
 Prototype:
 Feature:
@@ -46,3 +44,6 @@ Improve:
 Update:
 Fix:
 Release:
+
+# FONTS:
+large scale folder watching: https://github.com/notify-rs/notify/issues/412
