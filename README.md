@@ -23,6 +23,8 @@ Firstly, we are goig to encrypt, somehow, the user data. As of right now, we hav
 
 4. BROKEN PIPE: when connection with the server is lost, client fails almost silently. TCP connection loss is not handled. The following error will be printed by the client in such event: `Os { code: 32, kind: BrokenPipe, message: "Broken pipe" }`
 
+5. MAIN currently does not account for it's main task's health. Main tasks are core to the system. They must be watched, if any task returns with an error, the entire app might need to stop and log the error. Otherwise, main tasks may fail silently.
+
 # Marks
 ## MARK I: Oct 19, 2025;
 Today we finished our first baby step!

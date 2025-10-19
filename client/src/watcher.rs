@@ -1,3 +1,5 @@
+// This is a MAIN TASK - Main tasks are tasks with a dedicated rx_channel
+//
 // The wacher module is responsible for monitoring a given folder and piping
 // fs events foward. Nothing else!
 
@@ -12,7 +14,7 @@ type FsEventSender = Sender<Event>;
 pub async fn spawn_watcher(tx_async: FsEventSender) -> JoinHandle<Result<()>> {
     tokio::spawn(async move {
         let mut max_retry: u8 = 3;
-        while max_retry > 0 && let Err(e) = watch_folder(tx_async.clone()).await {
+        while max_retry > 0 && let Err(e) = bridge_sync_watcher(tx_async.clone()).await {
             max_retry -= 1;
             logger::error(format!("{:?}", e));
             logger::info(String::from("Folder watcher thread died, retrying..."));
@@ -21,7 +23,7 @@ pub async fn spawn_watcher(tx_async: FsEventSender) -> JoinHandle<Result<()>> {
     })
 }
 
-async fn watch_folder(tx_async: FsEventSender) -> Result<()> {
+async fn bridge_sync_watcher(tx_async: FsEventSender) -> Result<()> {
     // Bridges sync channel to tokio's
     let (tx_sync, rx_sync) = std::sync::mpsc::channel();
     let blocking_folder_watcher_handle = 

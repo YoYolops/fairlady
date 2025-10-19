@@ -1,6 +1,6 @@
 // FS adapter adapts notify events from the file system to NimbusProtocol
-// Every FS event that should be reflected in the server will generate e proper
-// NimbusProtocol instance
+// Every FS event that should be reflected in the server will generate a proper
+// NimbusProtocol instance. This is a SYNC module (at least by now)
 
 use core::{
     logger,
@@ -14,7 +14,7 @@ use notify::{
     EventKind::{Create, Modify, Remove},
 };
 
-pub async fn create_request_from_event(event: &Event) -> Result<NimbusProtocol> {
+pub fn create_request_from_event(event: &Event) -> Result<NimbusProtocol> {
     let request_protocol = match event.kind {
         Create(_) => build_request_from_create_event(),
         Modify(modify_kind) => build_request_from_modify_event(&modify_kind, &event)?,
