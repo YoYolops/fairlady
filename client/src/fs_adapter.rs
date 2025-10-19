@@ -1,5 +1,6 @@
-// Event adapter is a module that provides the translation between an application event
-// and the NimbusProtocol, so it 
+// FS adapter adapts notify events from the file system to NimbusProtocol
+// Every FS event that should be reflected in the server will generate e proper
+// NimbusProtocol instance
 
 use core::{
     logger,
@@ -13,10 +14,10 @@ use notify::{
     EventKind::{Create, Modify, Remove},
 };
 
-pub async fn create_request_from_event(event: Event) -> Result<NimbusProtocol> {
+pub async fn create_request_from_event(event: &Event) -> Result<NimbusProtocol> {
     let request_protocol = match event.kind {
         Create(_) => build_request_from_create_event(),
-        Modify(modify_kind) => build_request_from_modify_event(modify_kind, event)?,
+        Modify(modify_kind) => build_request_from_modify_event(&modify_kind, &event)?,
         Remove(_) => build_request_from_remove_event(),
         _ => bail!("This event was neither Create, Modify or Remove, therefore it doesn't have equivalent NimbusProtocol variant"),
     };
@@ -32,7 +33,7 @@ fn build_request_from_create_event() -> NimbusProtocol {
     )
 }
 
-fn build_request_from_modify_event(modify_kind: ModifyKind, event: Event) -> Result<NimbusProtocol> {
+fn build_request_from_modify_event(modify_kind: &ModifyKind, event: &Event) -> Result<NimbusProtocol> {
     let protocol = match modify_kind {
         ModifyKind::Metadata(_) => bail!("Invalid modify event kind: ModifyKind::Metadata"),
         ModifyKind::Name(rename_mode) => {
@@ -45,7 +46,7 @@ fn build_request_from_modify_event(modify_kind: ModifyKind, event: Event) -> Res
                 )
             } else {
                 if let RenameMode::From = rename_mode {
-                    logger::info(String::from("DETECTED Modify(Name(From)), possible dele by moving to trash"));
+                    logger::info(String::from(">>> DETECTED Modify(Name(From)), possible delete by moving to trash <<<"));
                 }
                 bail!("Cannot generate rename request for an event that doesn't hold all needed values: {:?}", rename_mode)
             }
@@ -71,12 +72,3 @@ fn build_request_from_remove_event() -> NimbusProtocol {
         }
     )
 }
-
-
-// pub async fn encode_request_protocol() -> Vec<u8> {
-//     Vec::from(b"hello")
-// }
-
-// pub async fn encrypt_data() {
-
-// }
