@@ -1,6 +1,6 @@
 pub mod constants;
-pub mod nimbus_protocol;
 pub mod logger;
+pub mod nimbus_protocol;
 
-pub use nimbus_protocol::NimbusProtocol;
 pub use anyhow::Result;
+pub use nimbus_protocol::NimbusProtocol;

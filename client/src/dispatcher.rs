@@ -7,20 +7,23 @@
 // encrypts file data when needed and fowards those protocols
 // as a bytes vec to the network handler
 
-use anyhow::{bail};
-use core::{logger, NimbusProtocol, Result};
-use tokio::{
-    task::JoinHandle,
-    sync::mpsc::{Receiver, Sender},
-};
-use notify::{Event};
 use crate::fs_adapter::create_request_from_event;
+use anyhow::bail;
+use core::{NimbusProtocol, Result, logger};
+use notify::Event;
+use tokio::{
+    sync::mpsc::{Receiver, Sender},
+    task::JoinHandle,
+};
 
 type FsEventReceiver = Receiver<Event>;
 type NetworkSender = Sender<NimbusProtocol>;
 type DispatchResult = Result<Option<NimbusProtocol>>;
 
-pub async fn spawn_dispatcher(mut rx_channel: FsEventReceiver, tx_channel: NetworkSender) -> JoinHandle<Result<()>> {
+pub async fn spawn_dispatcher(
+    mut rx_channel: FsEventReceiver,
+    tx_channel: NetworkSender,
+) -> JoinHandle<Result<()>> {
     tokio::spawn(async move {
         // Need refactor to spawn multiple tasks for each event
         while let Some(event) = rx_channel.recv().await {
@@ -31,8 +34,10 @@ pub async fn spawn_dispatcher(mut rx_channel: FsEventReceiver, tx_channel: Netwo
                 None => println!("No data was sent to server for this event"),
             };
             println!();
-        };
-        bail!("A MAIN TASK FAILED: Dispatcher task's receiver channel was closed. Dispatcher task exiting")
+        }
+        bail!(
+            "A MAIN TASK FAILED: Dispatcher task's receiver channel was closed. Dispatcher task exiting"
+        )
     })
 }
 

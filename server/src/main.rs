@@ -1,14 +1,11 @@
 mod dispatcher;
 
-use tokio::io::{self, AsyncReadExt};
+use core::{constants::TCP_SERVER_ADDR, nimbus_protocol::NimbusProtocol, Result};
+use tokio::io::{AsyncReadExt};
 use tokio::net::TcpListener;
-use core::{
-    constants::TCP_SERVER_ADDR,
-    nimbus_protocol::NimbusProtocol,
-};
 
 #[tokio::main]
-async fn main() -> io::Result<()> {
+async fn main() -> Result<()> {
     let listener = TcpListener::bind(TCP_SERVER_ADDR).await?;
 
     loop {
@@ -25,7 +22,9 @@ async fn main() -> io::Result<()> {
                     Ok(pack_size) => {
                         println!("SERVER PROCESSING: {} bytes", pack_size);
                         match NimbusProtocol::decode(&buf[..pack_size]) {
-                            Ok(nimbus_protocol) => println!("SERVER RECEIVED: {:#?}", nimbus_protocol),
+                            Ok(nimbus_protocol) => {
+                                println!("SERVER RECEIVED: {:#?}", nimbus_protocol)
+                            }
                             Err(e) => eprintln!("Received invalid UTF-8: {}", e),
                         }
                     }
