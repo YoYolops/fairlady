@@ -1,7 +1,9 @@
-use bincode::{self, Encode};
+use bincode::{self, Decode, Encode};
 use anyhow::{Result, Context};
 
-#[derive(Debug, Encode)]
+use crate::constants::{BINCODE_CONFIG};
+
+#[derive(Debug, Encode, Decode)]
 pub enum InterApplicationRequest {
     // Only the client requests
     CREATE { path: String, data: Vec<u8> },
@@ -14,7 +16,7 @@ pub enum InterApplicationRequest {
     FETCH,
 }
 
-#[derive(Debug, Encode)]
+#[derive(Debug, Encode, Decode)]
 pub enum InterApplicationResponse {
     // Only the server responds
     CREATE(bool),
@@ -27,19 +29,21 @@ pub enum InterApplicationResponse {
 
 
 
-#[derive(Debug, Encode)]
+#[derive(Debug, Encode, Decode)]
 pub enum NimbusProtocol {
     Request(InterApplicationRequest),
     Response(InterApplicationResponse)
 }
 
 impl NimbusProtocol {
-    pub fn serialize(&self) -> Result<Vec<u8>> {
-        let config = bincode::config::standard()
-            .with_big_endian()
-            .with_variable_int_encoding();
-
-        bincode::encode_to_vec(self, config)
+    pub fn encode(&self) -> Result<Vec<u8>> {
+        bincode::encode_to_vec(self, BINCODE_CONFIG)
             .context("EXTERNAL LIBRARY FAILURE: bincode failed to encode_to_vec")
+    }
+
+    pub fn decode(bin_vec: &[u8]) -> Result<NimbusProtocol> {
+        let (decoded_data, _len): (NimbusProtocol, usize) = bincode::decode_from_slice(bin_vec, BINCODE_CONFIG)
+            .context("External library BINCODE failed to decode binary")?;
+        Ok(decoded_data)
     }
 }

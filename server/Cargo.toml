@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+core = { path = "../core" } 
 anyhow = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
-core = { path = "../core" } 

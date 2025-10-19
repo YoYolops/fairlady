@@ -1,3 +1,6 @@
+// The wacher module is responsible for monitoring a given folder and piping
+// fs events foward. Nothing else!
+
 use notify::{Event, RecursiveMode, Watcher};
 use std::path::Path;
 use core::{constants::OBSERVED_FOLDER_PATH_STRING, logger, Result};

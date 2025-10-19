@@ -14,8 +14,9 @@ type FsEventReceiver = Receiver<Event>;
 type NetworkSender = Sender<Vec<u8>>;
 type DispatchResult = Result<Option<Vec<u8>>>;
 
-pub async fn spawn_dispatcher(mut rx_channel: FsEventReceiver, tx_channel: NetworkSender) -> JoinHandle<Result<()>> {
+pub async fn spawn_event_preprocessor(mut rx_channel: FsEventReceiver, tx_channel: NetworkSender) -> JoinHandle<Result<()>> {
     tokio::spawn(async move {
+        // Need refactor to spawn multiple tasks for each event
         while let Some(event) = rx_channel.recv().await {
             println!();
             let dispatch_value: Option<Vec<u8>> = dispatch_fs_event(&event).await?;
@@ -40,7 +41,7 @@ async fn dispatch_fs_event(fs_event: &Event) -> DispatchResult {
     match create_request_from_event(&fs_event).await {
         Ok(protocol) => {
             let serialized_protocol: Vec<u8> = protocol
-                .serialize()
+                .encode()
                 .context("dispatch_fs_event failed while trying to serialize built NimbusProtocol")?;
             Ok(Some(serialized_protocol))
         },

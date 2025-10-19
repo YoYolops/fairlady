@@ -21,9 +21,12 @@ Firstly, we are goig to encrypt, somehow, the user data. As of right now, we hav
 
 3. We are, in a first moment, building everything entirely for **LINUX**. No tests were made in another O.S., and it is very important to do so, since different file system might result in remarkable differences in notifications fired.
 
+4. BROKEN PIPE: when connection with the server is lost, client fails almost silently. TCP connection loss is not handled. The following error will be printed by the client in such event: `Os { code: 32, kind: BrokenPipe, message: "Broken pipe" }`
+
 # Marks
 ## MARK I: Oct 19, 2025;
 Today we finished our first baby step!
+
 We still don't have enough to call it a PoC, but i'm pretty sure we are halfway through.
 These first couple hundred lines were very important to understand a little better what we are doing and what will be, most likely, the future challenges. As of right now, everything seems technically possible and overall manageable within the remaining estimated time (12 months).
 
