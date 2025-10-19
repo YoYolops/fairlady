@@ -20,9 +20,12 @@ pub async fn spawn_dispatcher(mut rx_channel: FsEventReceiver, tx_channel: Netwo
             println!();
             let dispatch_value: Option<Vec<u8>> = dispatch_fs_event(&event).await?;
             match dispatch_value {
-                Some(message) => tx_channel.send(message).await?,
+                Some(message) => {
+                    logger::success(format!("SENDING {} bytes", message.len()));
+                    tx_channel.send(message).await?;
+                },
                 None => println!("No data was sent to server for this event"),
-            }
+            };
             println!();
         };
         bail!("")
