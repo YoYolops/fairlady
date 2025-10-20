@@ -1,5 +1,9 @@
 Building blocks for a replicant network. Its main goal i storing data from a client into a server. Focused on safety (end to end encrypting) and scalability. 
 
+# Similar projects:
+[Nextcloud Files](https://google.com): Solid and mature. Written in `php`. Centralized. Focused on the end user (companies)
+[Syncthing](https://syncthing.net/): `C++`, Descentralized, secure
+
 # Marks
 ## MARK I: Oct 19, 2025;
 Today we finished our first baby step!
@@ -8,7 +12,7 @@ We still don't have enough to call it a PoC, but i'm pretty sure we are halfway 
 These first couple hundred lines were very important to understand a little better what we are doing and what will be, most likely, the future challenges. As of right now, everything seems technically possible and overall manageable within the remaining estimated time (12 months).
 
 Lets talk about the **MARK I** features and upgrades:
-1. We successfully implemented a file watcher, with the notify crate. We what a given folder for every change, by using a syscall, OS dependant and managed by notify
+1. We successfully implemented a file watcher, with the notify crate. We watch a given folder for every change, by using a syscall, OS dependant and managed by notify
 
 2. We created the foundation for NimbusProtocol, our inter application (client/server) protocol, with simplicity in mind (but not enough to use some already existent ones).
 
@@ -37,6 +41,9 @@ Firstly, we are goig to encrypt, somehow, the user data. As of right now, we hav
 
 6. **INFORM THE AMOUNT OF BYTES TRANSITING VIA TCP CONNECTION:** otherwise the other end won't know how many bytes should decode and might try to parse an invalid sequence
 
+7. **Send real data in tcp connection:** Curretly, NimbusProtocol has, in multiple of its variants, a data field that is currently mocked. It must dinamically identify the target file and collect the relevant data to be sent
+
+
 ### Commit Classes:
 Prototype:
 Feature:
@@ -47,3 +54,5 @@ Release:
 
 # FONTS:
 large scale folder watching: https://github.com/notify-rs/notify/issues/412
+Linux Docs: https://man7.org/linux/man-pages/man7/inotify.7.html
+Linux Docs 2(?): https://docs.kernel.org/filesystems/inotify.html
