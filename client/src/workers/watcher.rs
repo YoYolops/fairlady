@@ -54,7 +54,7 @@ async fn bridge_sync_watcher(tx_async: FsEventSender) -> Result<()> {
                 }
             }
         }
-        bail!("There is no senders to listen to in folder watcher")
+        bail!("A MAIN TASK FAILED: Dispatcher task's receiver channel was closed. Dispatcher task exiting")
     })
     .await??;
     Ok(blocking_folder_watcher_handle)

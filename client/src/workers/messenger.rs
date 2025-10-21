@@ -7,7 +7,7 @@ use tokio::{self, io::AsyncWriteExt, net::TcpStream, sync::mpsc::Receiver, task:
 
 type NimbusReceiver = Receiver<NimbusProtocol>;
 
-pub async fn spawn_network_handler(
+pub async fn spawn_messenger(
     mut internal_network_rx: NimbusReceiver,
     mut tcp_stream: TcpStream,
 ) -> JoinHandle<Result<()>> {

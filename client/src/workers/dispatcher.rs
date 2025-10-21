@@ -9,7 +9,11 @@
 
 use crate::fs_adapter::create_request_from_event;
 use anyhow::bail;
-use core::{NimbusProtocol, Result, logger};
+use core::{
+    NimbusProtocol,
+    Result,
+    logger,
+};
 use notify::Event;
 use tokio::{
     sync::mpsc::{Receiver, Sender},

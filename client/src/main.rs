@@ -1,14 +1,10 @@
-mod dispatcher;
+mod workers;
 mod fs_adapter;
-mod network_handler;
-mod watcher;
 
 use core::{Result, constants::TCP_SERVER_ADDR};
 use tokio::{net::TcpStream, sync::mpsc, task::JoinHandle};
-use watcher::spawn_watcher;
 
-use dispatcher::spawn_dispatcher;
-use network_handler::spawn_network_handler;
+use workers::{messenger, dispatcher, watcher};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -16,13 +12,13 @@ async fn main() -> Result<()> {
     let (fs_event_tx, fs_event_rx) = mpsc::channel(32);
     let (network_tx, network_rx) = mpsc::channel(32);
 
-    let folder_watcher_main_task: JoinHandle<Result<()>> = spawn_watcher(fs_event_tx).await;
+    let watcher_main_task: JoinHandle<Result<()>> = watcher::spawn_watcher(fs_event_tx).await;
     let _dispatcher_main_task: JoinHandle<Result<()>> =
-        spawn_dispatcher(fs_event_rx, network_tx).await;
-    let _network_handler_main_task: JoinHandle<Result<()>> =
-        spawn_network_handler(network_rx, stream).await;
+        dispatcher::spawn_dispatcher(fs_event_rx, network_tx).await;
+    let _messenger_main_task: JoinHandle<Result<()>> =
+        messenger::spawn_messenger(network_rx, stream).await;
 
-    match folder_watcher_main_task.await {
+    match watcher_main_task.await {
         Ok(_) => println!(
             "CUMULUS Client gracefully exiting without errors. This is odd since the expectation is for it to live forever"
         ),
