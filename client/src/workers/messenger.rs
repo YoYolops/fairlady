@@ -1,8 +1,7 @@
 // This is a MAIN TASK - Main tasks are tasks with a dedicated rx_channel
 
-use core::{NimbusProtocol, Result};
-
-use anyhow::bail;
+use anyhow::{Context, bail};
+use core::{NimbusProtocol, Result, errors::client_err::MainTaskError};
 use tokio::{self, io::AsyncWriteExt, net::TcpStream, sync::mpsc::Receiver, task::JoinHandle};
 
 type NimbusReceiver = Receiver<NimbusProtocol>;
@@ -27,8 +26,6 @@ pub async fn spawn_messenger(
         }
         // Note that this is just an error propagation, it might never be logged.
         // It is main thread's responsability to ensure main task's health
-        bail!(
-            "A MAIN TASK FAILED: Network Handler task's receiver channel was closed. Network Handler task exiting"
-        )
+        Err(MainTaskError::ErrReceiverChannelClosed).context("Messenger exited.")?
     })
 }

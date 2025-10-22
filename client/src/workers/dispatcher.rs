@@ -8,12 +8,8 @@
 // as a bytes vec to the network handler
 
 use crate::fs_adapter::create_request_from_event;
-use anyhow::bail;
-use core::{
-    NimbusProtocol,
-    Result,
-    logger,
-};
+use anyhow::Context;
+use core::{NimbusProtocol, Result, errors::client_err::MainTaskError, logger};
 use notify::Event;
 use tokio::{
     sync::mpsc::{Receiver, Sender},
@@ -39,9 +35,7 @@ pub async fn spawn_dispatcher(
             };
             println!();
         }
-        bail!(
-            "A MAIN TASK FAILED: Dispatcher task's receiver channel was closed. Dispatcher task exiting"
-        )
+        Err(MainTaskError::ErrReceiverChannelClosed).context("Dispatcher exited.")?
     })
 }
 

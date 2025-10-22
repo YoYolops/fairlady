@@ -1,7 +1,7 @@
 mod dispatcher;
 
-use core::{constants::TCP_SERVER_ADDR, nimbus_protocol::NimbusProtocol, Result};
-use tokio::io::{AsyncReadExt};
+use core::{Result, constants::TCP_SERVER_ADDR, nimbus_protocol::NimbusProtocol};
+use tokio::io::AsyncReadExt;
 use tokio::net::TcpListener;
 
 #[tokio::main]

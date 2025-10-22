@@ -1,10 +1,10 @@
-mod workers;
 mod fs_adapter;
+mod workers;
 
 use core::{Result, constants::TCP_SERVER_ADDR};
 use tokio::{net::TcpStream, sync::mpsc, task::JoinHandle};
 
-use workers::{messenger, dispatcher, watcher};
+use workers::{dispatcher, messenger, watcher};
 
 #[tokio::main]
 async fn main() -> Result<()> {
