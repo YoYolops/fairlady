@@ -1,11 +1,11 @@
 mod dispatcher;
 
-use core::{Result, constants::TCP_SERVER_ADDR, nimbus_protocol::NimbusProtocol};
+use core::{AnyResult, constants::TCP_SERVER_ADDR, nimbus_protocol::NimbusProtocol};
 use tokio::io::AsyncReadExt;
 use tokio::net::TcpListener;
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> AnyResult<()> {
     let listener = TcpListener::bind(TCP_SERVER_ADDR).await?;
 
     loop {

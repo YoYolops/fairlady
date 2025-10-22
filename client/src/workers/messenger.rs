@@ -1,7 +1,7 @@
-// This is a MAIN TASK - Main tasks are tasks with a dedicated rx_channel
+// This is a WORKER - Workers are tasks with a dedicated rx_channel
 
 use anyhow::{Context, bail};
-use core::{NimbusProtocol, Result, errors::client_err::MainTaskError};
+use core::{NimbusProtocol, AnyResult, errors::client_err::WorkerError};
 use tokio::{self, io::AsyncWriteExt, net::TcpStream, sync::mpsc::Receiver, task::JoinHandle};
 
 type NimbusReceiver = Receiver<NimbusProtocol>;
@@ -9,7 +9,7 @@ type NimbusReceiver = Receiver<NimbusProtocol>;
 pub async fn spawn_messenger(
     mut internal_network_rx: NimbusReceiver,
     mut tcp_stream: TcpStream,
-) -> JoinHandle<Result<()>> {
+) -> JoinHandle<AnyResult<()>> {
     tokio::spawn(async move {
         // Listenn and sends via tcp
         while let Some(nimbus_protocol) = internal_network_rx.recv().await {
@@ -26,6 +26,6 @@ pub async fn spawn_messenger(
         }
         // Note that this is just an error propagation, it might never be logged.
         // It is main thread's responsability to ensure main task's health
-        Err(MainTaskError::ErrReceiverChannelClosed).context("Messenger exited.")?
+        Err(WorkerError::ErrReceiverChannelClosed).context("Messenger exited.")?
     })
 }

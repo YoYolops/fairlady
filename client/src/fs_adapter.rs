@@ -4,7 +4,7 @@
 
 use anyhow::{Ok, bail};
 use core::{
-    Result, logger,
+    AnyResult, logger,
     nimbus_protocol::{InterApplicationRequest, NimbusProtocol},
 };
 use notify::{
@@ -13,7 +13,7 @@ use notify::{
     event::{ModifyKind, RenameMode},
 };
 
-pub fn create_request_from_event(event: &Event) -> Result<NimbusProtocol> {
+pub fn create_request_from_event(event: &Event) -> AnyResult<NimbusProtocol> {
     let request_protocol = match event.kind {
         Create(_) => build_request_from_create_event(),
         Modify(modify_kind) => build_request_from_modify_event(&modify_kind, &event)?,
@@ -35,7 +35,7 @@ fn build_request_from_create_event() -> NimbusProtocol {
 fn build_request_from_modify_event(
     modify_kind: &ModifyKind,
     event: &Event,
-) -> Result<NimbusProtocol> {
+) -> AnyResult<NimbusProtocol> {
     let protocol = match modify_kind {
         ModifyKind::Metadata(_) => bail!("Invalid modify event kind: ModifyKind::Metadata"),
         ModifyKind::Name(rename_mode) => {

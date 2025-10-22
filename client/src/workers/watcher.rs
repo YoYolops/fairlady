@@ -1,17 +1,17 @@
-// This is a MAIN TASK - Main tasks are tasks with a dedicated rx_channel
+// This is a WORKER - Workers are tasks with a dedicated rx_channel
 //
 // The wacher module is responsible for monitoring a given folder and piping
 // fs events foward. Nothing else!
 
 use anyhow::{Context, bail};
-use core::{Result, constants::OBSERVED_FOLDER_PATH_STRING, logger};
+use core::{AnyResult, constants::OBSERVED_FOLDER_PATH_STRING, logger, errors::client_err::WorkerError};
 use notify::{Event, RecursiveMode, Watcher};
 use std::path::Path;
 use tokio::{sync::mpsc::Sender, task::JoinHandle};
 
 type FsEventSender = Sender<Event>;
 
-pub async fn spawn_watcher(tx_async: FsEventSender) -> JoinHandle<Result<()>> {
+pub async fn spawn_watcher(tx_async: FsEventSender) -> JoinHandle<AnyResult<()>> {
     tokio::spawn(async move {
         let mut max_retry: u8 = 3;
         while max_retry > 0
@@ -25,10 +25,10 @@ pub async fn spawn_watcher(tx_async: FsEventSender) -> JoinHandle<Result<()>> {
     })
 }
 
-async fn bridge_sync_watcher(tx_async: FsEventSender) -> Result<()> {
+async fn bridge_sync_watcher(tx_async: FsEventSender) -> AnyResult<()> {
     // Bridges sync channel to tokio's
     let (tx_sync, rx_sync) = std::sync::mpsc::channel();
-    let blocking_folder_watcher_handle = tokio::task::spawn_blocking(move || -> Result<()> {
+    let blocking_folder_watcher_handle = tokio::task::spawn_blocking(move || -> AnyResult<()> {
         let mut watcher =
             notify::recommended_watcher(tx_sync).context("Failed to spawn notify watcher")?;
 
@@ -54,7 +54,7 @@ async fn bridge_sync_watcher(tx_async: FsEventSender) -> Result<()> {
                 }
             }
         }
-        bail!("A MAIN TASK FAILED: Dispatcher task's receiver channel was closed. Dispatcher task exiting")
+        Err(WorkerError::ErrReceiverChannelClosed).context("Messenger exited.")?
     })
     .await??;
     Ok(blocking_folder_watcher_handle)

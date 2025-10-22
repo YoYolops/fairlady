@@ -1,4 +1,4 @@
-// This is a MAIN TASK - Main tasks are tasks with a dedicated rx_channel
+// This is a WORKER - Workers are tasks with a dedicated rx_channel
 //
 // https://m.media-amazon.com/images/M/MV5BNzhhZTdjM2EtNGY3NS00MjdhLWE2ZTUtYTVkYjc3OWMyNzRlXkEyXkFqcGc@._V1_QL75_UX403_.jpg
 //
@@ -9,7 +9,7 @@
 
 use crate::fs_adapter::create_request_from_event;
 use anyhow::Context;
-use core::{NimbusProtocol, Result, errors::client_err::MainTaskError, logger};
+use core::{NimbusProtocol, AnyResult, errors::client_err::WorkerError, logger};
 use notify::Event;
 use tokio::{
     sync::mpsc::{Receiver, Sender},
@@ -18,12 +18,12 @@ use tokio::{
 
 type FsEventReceiver = Receiver<Event>;
 type NetworkSender = Sender<NimbusProtocol>;
-type DispatchResult = Result<Option<NimbusProtocol>>;
+type DispatchResult = AnyResult<Option<NimbusProtocol>>;
 
 pub async fn spawn_dispatcher(
     mut rx_channel: FsEventReceiver,
     tx_channel: NetworkSender,
-) -> JoinHandle<Result<()>> {
+) -> JoinHandle<AnyResult<()>> {
     tokio::spawn(async move {
         // Need refactor to spawn multiple tasks for each event
         while let Some(event) = rx_channel.recv().await {
@@ -35,7 +35,7 @@ pub async fn spawn_dispatcher(
             };
             println!();
         }
-        Err(MainTaskError::ErrReceiverChannelClosed).context("Dispatcher exited.")?
+        Err(WorkerError::ErrReceiverChannelClosed).context("Dispatcher exited.")?
     })
 }
 

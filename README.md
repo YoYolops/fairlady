@@ -2,6 +2,7 @@ Building blocks for a replicant network. Its main goal i storing data from a cli
 
 # Similar projects:
 [Nextcloud Files](https://google.com): Solid and mature. Written in `php`. Centralized. Focused on the end user (companies)
+
 [Syncthing](https://syncthing.net/): `C++`, Descentralized, secure
 
 # Marks
@@ -41,16 +42,18 @@ Firstly, we are goig to encrypt, somehow, the user data. As of right now, we hav
 
 6. **INFORM THE AMOUNT OF BYTES TRANSITING VIA TCP CONNECTION:** otherwise the other end won't know how many bytes should decode and might try to parse an invalid sequence
 
-7. **Send real data in tcp connection:** Curretly, NimbusProtocol has, in multiple of its variants, a data field that is currently mocked. It must dinamically identify the target file and collect the relevant data to be sent
+7. **Send real data in tcp connection:** Currently, NimbusProtocol has, in multiple of its variants, a data field that is mocked. It must dinamically identify the target file and collect the relevant data to be sent
 
+8. **Prevent thread starvation** messages might arrive unordered into main tasks. They might starve with a lot of work to do because they are waiting for a previous packa (eg. package 2, 3, 4 in hand but stopped waiting 1).
 
 ### Commit Classes:
-Prototype:
-Feature:
-Improve:
-Update:
-Fix:
-Release:
+Prototype: (A half written feature or a poc)
+Add:       (a generic addition, when you dont think it fits any of the below)
+Feature:   (a complete feature for the program was just finished)
+Improve:   (makes something better, more performant, more readable)
+Update:    (usually for oficial docs os app policies)
+Fix:       (a bug or some undesired behavior)
+Release:   (The program just arrived at a new mark, with a collection of new features)
 
 # FONTS:
 large scale folder watching: https://github.com/notify-rs/notify/issues/412

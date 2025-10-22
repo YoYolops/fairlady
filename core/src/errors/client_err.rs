@@ -2,19 +2,19 @@ use std::fmt::{self, Display};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum MainTaskError {
+pub enum WorkerError {
     ErrReceiverChannelClosed,
 }
 
-impl MainTaskError {
+impl WorkerError {
     fn as_str(&self) -> &str {
         match self {
-            MainTaskError::ErrReceiverChannelClosed => "ERR_RECEIVER_CHANNEL_CLOSED",
+            WorkerError::ErrReceiverChannelClosed => "ERR_RECEIVER_CHANNEL_CLOSED",
         }
     }
 }
 
-impl Display for MainTaskError {
+impl Display for WorkerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str(),)
     }
