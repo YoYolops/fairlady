@@ -54,6 +54,7 @@ Improve:   (makes something better, more performant, more readable)
 Update:    (usually for oficial docs os app policies)
 Fix:       (a bug or some undesired behavior)
 Release:   (The program just arrived at a new mark, with a collection of new features)
+Move:      (When some functionality or module is moved around, between workspaces, eg client to core, or inside files etc)
 
 # FONTS:
 large scale folder watching: https://github.com/notify-rs/notify/issues/412

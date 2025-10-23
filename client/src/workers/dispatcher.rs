@@ -28,7 +28,7 @@ pub async fn spawn_dispatcher(
         // Need refactor to spawn multiple tasks for each event
         while let Some(event) = rx_channel.recv().await {
             println!();
-            let dispatch_value: Option<NimbusProtocol> = dispatch_fs_event(&event)?;
+            let dispatch_value: Option<NimbusProtocol> = dispatch_fs_event(&event).await?;
             match dispatch_value {
                 Some(message) => tx_channel.send(message).await?,
                 None => println!("No data was sent to server for this event"),
@@ -39,12 +39,12 @@ pub async fn spawn_dispatcher(
     })
 }
 
-fn dispatch_fs_event(fs_event: &Event) -> DispatchResult {
+async fn dispatch_fs_event(fs_event: &Event) -> DispatchResult {
     // Preprocess and turn them into a network request to sync data, or update, or create etc
     // The request will be parsed to binary inside spawn_dispatcher
     // The parsed to binary request will be sent through mpsc channel also by spawn_dispatcher
     logger::info(format!("{:?}", fs_event));
-    match create_request_from_event(&fs_event) {
+    match create_request_from_event(&fs_event).await {
         Ok(protocol) => Ok(Some(protocol)),
         Err(e) => {
             logger::error(format!("{:?}", e));

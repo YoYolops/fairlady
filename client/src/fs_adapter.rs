@@ -5,6 +5,7 @@
 use anyhow::{Ok, bail};
 use core::{
     AnyResult, logger,
+    fs_handler,
     nimbus_protocol::{InterApplicationRequest, NimbusProtocol},
 };
 use std::path::PathBuf;
@@ -14,10 +15,10 @@ use notify::{
     event::{ModifyKind, RenameMode},
 };
 
-pub fn create_request_from_event(event: &Event) -> AnyResult<NimbusProtocol> {
+pub async fn create_request_from_event(event: &Event) -> AnyResult<NimbusProtocol> {
     let request_protocol = match event.kind {
-        Create(_) => build_request_from_create_event(),
-        Modify(modify_kind) => build_request_from_modify_event(&modify_kind, &event)?,
+        Create(_) => build_request_from_create_event(&event).await?,
+        Modify(modify_kind) => build_request_from_modify_event(&modify_kind, &event).await?,
         Remove(_) => build_request_from_remove_event(event),
         _ => bail!(
             "This event was neither Create, Modify or Remove, therefore it doesn't have equivalent NimbusProtocol variant"
@@ -26,14 +27,14 @@ pub fn create_request_from_event(event: &Event) -> AnyResult<NimbusProtocol> {
     Ok(request_protocol)
 }
 
-fn build_request_from_create_event() -> NimbusProtocol {
-    NimbusProtocol::Request(InterApplicationRequest::CREATE {
-        path: String::from("path"),
-        data: Vec::from(b"hello"),
-    })
+async fn build_request_from_create_event(event: &Event) -> AnyResult<NimbusProtocol> {
+    Ok(NimbusProtocol::Request(InterApplicationRequest::CREATE {
+        path: format!("{:?}", event.paths[0]),
+        data: fs_handler::fetch_fs_data(&event.paths[0]).await?,
+    }))
 }
 
-fn build_request_from_modify_event(
+async fn build_request_from_modify_event(
     modify_kind: &ModifyKind,
     event: &Event,
 ) -> AnyResult<NimbusProtocol> {
@@ -43,7 +44,7 @@ fn build_request_from_modify_event(
             if let RenameMode::Both = rename_mode {
                 NimbusProtocol::Request(InterApplicationRequest::RENAME {
                     current_path: format!("{:?}", event.paths[0]),
-                    new_path: format!("{:?}", event.paths[1].to_str()),
+                    new_path: format!("{:?}", event.paths[1]),
                 })
             } else {
                 if let RenameMode::From = rename_mode {
@@ -59,7 +60,7 @@ fn build_request_from_modify_event(
         }
         ModifyKind::Data(_) => NimbusProtocol::Request(InterApplicationRequest::UPDATE {
             path: format!("{:?}", event.paths[0]),
-            data: Vec::from(b"hello"),
+            data: fs_handler::fetch_fs_data(&event.paths[0]).await?,
         }),
         _ => bail!("Irrelevant modify event. Doesn't have equivalent NimbusProtocol variant"),
     };
