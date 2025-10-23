@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use anyhow::{Context, Result};
 use bincode::{self, Decode, Encode};
 
@@ -18,7 +20,7 @@ pub enum InterApplicationRequest {
         current_path: String,
         new_path: String,
     },
-    DELETE(String),
+    DELETE(PathBuf),
     // This one is harder, which data should be passed to SYNC in order to assure
     // data synchronization between client and server
     SYNC(String),

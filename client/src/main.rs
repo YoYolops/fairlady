@@ -1,5 +1,4 @@
 mod fs_adapter;
-mod fs_handler;
 mod workers;
 
 use core::{AnyResult, constants::TCP_SERVER_ADDR};

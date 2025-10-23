@@ -1,7 +1,9 @@
-use core::AnyResult;
+use std::path::PathBuf;
 use tokio::{fs::File, io::AsyncReadExt, task};
 
-pub async fn fetch_fs_data(data_path: &String)-> AnyResult<Vec<u8>> {
+use crate::AnyResult;
+
+pub async fn fetch_fs_data(data_path: &PathBuf)-> AnyResult<Vec<u8>> {
     // Fetches the entire of the file (EXPENSIVE AND DANGEROUSLY GREEDY)
     let mut file = File::open(data_path).await?;
     task::spawn(async move {

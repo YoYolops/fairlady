@@ -7,6 +7,7 @@ use core::{
     AnyResult, logger,
     nimbus_protocol::{InterApplicationRequest, NimbusProtocol},
 };
+use std::path::PathBuf;
 use notify::{
     Event,
     EventKind::{Create, Modify, Remove},
@@ -66,8 +67,7 @@ fn build_request_from_modify_event(
 }
 
 fn build_request_from_remove_event(event: &Event) -> NimbusProtocol {
-    NimbusProtocol::Request(InterApplicationRequest::UPDATE {
-        path: format!("{:?}", event.paths[0]),
-        data: Vec::from(b"hello"),
-    })
+    NimbusProtocol::Request(
+        InterApplicationRequest::DELETE(PathBuf::from(&event.paths[0]))
+    )
 }
