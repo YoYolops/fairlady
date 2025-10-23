@@ -1,40 +1,23 @@
 mod dispatcher;
+mod messenger;
 
-use core::{AnyResult, constants::TCP_SERVER_ADDR, nimbus_protocol::NimbusProtocol};
-use tokio::io::AsyncReadExt;
-use tokio::net::TcpListener;
+use tokio::sync::mpsc;
+use tokio::task::JoinHandle;
+use core::AnyResult;
 
 #[tokio::main]
 async fn main() -> AnyResult<()> {
-    let listener = TcpListener::bind(TCP_SERVER_ADDR).await?;
+    let (messenger_tx, _messenger_rx) = mpsc::channel(32);
+    let messenger_main_task: JoinHandle<AnyResult<()>> = messenger::spawn_messenger(messenger_tx).await;
 
-    loop {
-        let (mut socket, _) = listener.accept().await?;
-
-        tokio::spawn(async move {
-            let mut buf = vec![0; 1024];
-
-            loop {
-                match socket.read(&mut buf).await {
-                    // Return value of `Ok(0)` signifies that the remote has
-                    // closed
-                    Ok(0) => return,
-                    Ok(pack_size) => {
-                        println!("SERVER PROCESSING: {} bytes", pack_size);
-                        match NimbusProtocol::decode(&buf[..pack_size]) {
-                            Ok(nimbus_protocol) => {
-                                println!("SERVER RECEIVED: {:#?}", nimbus_protocol)
-                            }
-                            Err(e) => eprintln!("Received invalid UTF-8: {}", e),
-                        }
-                    }
-                    Err(_) => {
-                        // Unexpected socket error. There isn't much we can do
-                        // here so just stop processing.
-                        return;
-                    }
-                }
-            }
-        });
-    }
+    match messenger_main_task.await {
+        Ok(_) => println!(
+            "CUMULUS Server gracefully exiting without errors. This is odd since the expectation is for it to live forever"
+        ),
+        Err(e) => {
+            println!("{:?}", e);
+            println!("CUMULUS Server gracefully exiting on messenger error. Without messenger, we cannot work!");
+        }
+    };
+    Ok(())
 }

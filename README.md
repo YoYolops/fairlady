@@ -32,7 +32,7 @@ Firstly, we are goig to encrypt, somehow, the user data. As of right now, we hav
 # To do
 1. **ACCOUNT FOR SILENT REMOVAL:** When a file/folder is sent to the trash bin, it fires a `Modify(Name(From))`, instead of a Remove event. So it won't be catched by the Remove match arm. In addition, the app does not send a request to server on `Modify(Name(From))`, only on `Modify(Name(Both))`, which represents a rename. In other words, sending a file to the trash bin would be completely missed by our system. This shows the need for an extra algorithm to ensure consistency between client and server
 
-2. [SOLVED] - **FIX PATHSTRING ARRIVING BADLY FORMATTED ON THE SERVER:** The paths strings for some request kids are arriving badly formatted on the server
+2. [DONE] - **FIX PATHSTRING ARRIVING BADLY FORMATTED ON THE SERVER:** The paths strings for some request kids are arriving badly formatted on the server
 
 3. **TEST IN WINDOWS:** We are, in a first moment, building everything entirely for **LINUX**. No tests were made in another O.S., and it is very important to do so, since different file system might result in remarkable differences in notifications fired.
 
@@ -40,9 +40,9 @@ Firstly, we are goig to encrypt, somehow, the user data. As of right now, we hav
 
 5. **IMPROVE MAIN FUNCTION:** currently, it does not account for it's main task's health. Main tasks are core to the system. They must be watched, if any task returns with an error, the entire app might need to stop and log the error. Otherwise, main tasks may fail silently.
 
-6. **INFORM THE AMOUNT OF BYTES TRANSITING VIA TCP CONNECTION:** otherwise the other end won't know how many bytes should decode and might try to parse an invalid sequence
+6. **INFORM THE AMOUNT OF BYTES TRANSITING VIA TCP CONNECTION:** otherwise the other end won't know how many bytes should decode and might try to parse an invalid sequence. This will only be a problem the request size surpass the allocated receiver buffer's
 
-7. **Send real data in tcp connection:** Currently, NimbusProtocol has, in multiple of its variants, a data field that is mocked. It must dinamically identify the target file and collect the relevant data to be sent
+7. [DONE] - **Send real data in tcp connection:** Currently, NimbusProtocol has, in multiple of its variants, a data field that is mocked. It must dinamically identify the target file and collect the relevant data to be sent
 
 8. **Prevent thread starvation** messages might arrive unordered into main tasks. They might starve with a lot of work to do because they are waiting for a previous packa (eg. package 2, 3, 4 in hand but stopped waiting 1).
 

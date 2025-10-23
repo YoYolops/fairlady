@@ -1,5 +1,12 @@
+#Copyright (C) 2025-2026 Yohan Lopes Rodrigues. AGPLv3 license.
 [workspace]
 members = ["client", "server", "core"]
+
+[workspace.package]
+authors = ["Yohan Lopes R."]
+edition = "2024"
+license = "AGPLv3"
+repository = "https://github.com/YoYolops/cumulus"
 
 [workspace.dependencies]
 anyhow = "1.0.100"
