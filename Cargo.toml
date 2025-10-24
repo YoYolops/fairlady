@@ -1,6 +1,7 @@
 #Copyright (C) 2025-2026 Yohan Lopes Rodrigues. AGPLv3 license.
 [workspace]
 members = ["client", "server", "core"]
+resolver = "3"
 
 [workspace.package]
 authors = ["Yohan Lopes R."]
