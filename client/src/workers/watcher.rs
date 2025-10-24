@@ -4,7 +4,9 @@
 // fs events foward. Nothing else!
 
 use anyhow::{Context, bail};
-use core::{AnyResult, constants::OBSERVED_FOLDER_PATH_STRING, logger, errors::client_err::WorkerError};
+use core::{
+    AnyResult, constants::OBSERVED_FOLDER_PATH_STRING, errors::client_err::WorkerError, logger,
+};
 use notify::{Event, RecursiveMode, Watcher};
 use std::path::Path;
 use tokio::{sync::mpsc::Sender, task::JoinHandle};

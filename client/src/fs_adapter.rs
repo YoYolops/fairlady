@@ -4,16 +4,15 @@
 
 use anyhow::{Ok, bail};
 use core::{
-    AnyResult, logger,
-    fs_handler,
+    AnyResult, fs_handler, logger,
     nimbus_protocol::{InterApplicationRequest, NimbusProtocol},
 };
-use std::path::PathBuf;
 use notify::{
     Event,
     EventKind::{Create, Modify, Remove},
     event::{ModifyKind, RenameMode},
 };
+use std::path::PathBuf;
 
 pub async fn create_request_from_event(event: &Event) -> AnyResult<NimbusProtocol> {
     let request_protocol = match event.kind {
@@ -68,7 +67,7 @@ async fn build_request_from_modify_event(
 }
 
 fn build_request_from_remove_event(event: &Event) -> NimbusProtocol {
-    NimbusProtocol::Request(
-        InterApplicationRequest::DELETE(PathBuf::from(&event.paths[0]))
-    )
+    NimbusProtocol::Request(InterApplicationRequest::DELETE(PathBuf::from(
+        &event.paths[0],
+    )))
 }

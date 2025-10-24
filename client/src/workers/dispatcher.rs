@@ -9,7 +9,7 @@
 
 use crate::fs_adapter::create_request_from_event;
 use anyhow::Context;
-use core::{NimbusProtocol, AnyResult, errors::client_err::WorkerError, logger};
+use core::{AnyResult, NimbusProtocol, errors::client_err::WorkerError, logger};
 use notify::Event;
 use tokio::{
     sync::mpsc::{Receiver, Sender},
