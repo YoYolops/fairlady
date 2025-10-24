@@ -39,12 +39,10 @@ pub async fn spawn_messenger(tx_channel: NimbusSender) -> JoinHandle<AnyResult<(
                                     logger::success(format!("Successfully decoded packet. Forwarding: {:#?}", nimbus_data));
                                     if let Err(e) = tx_channel_clone.send(nimbus_data).await {
                                         logger::error(format!("Failed to send data via messenger sender channel. {:?}", e));
-                                        return;
                                     }
                                 },
                                 Err(e) => {
                                     logger::error(format!("Failed to decode NimbusProtocol: {:?} REQUEST IGNORED", e));
-                                    return;
                                 }
                             }
                         }
