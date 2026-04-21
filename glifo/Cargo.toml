@@ -1,0 +1,12 @@
+[package]
+name = "glifo"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true}
