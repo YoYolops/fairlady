@@ -13,3 +13,25 @@ services:
     volumes:
       # Data Persistence
       - ./kubo_node/data:/data/ipfs
+
+  fairlady_daemon_dev:
+    build:
+      context: . 
+      dockerfile: ./daemon/Dockerfile.dev 
+    container_name: fairlady_dev
+    volumes:
+      # 1. Mount the ENTIRE workspace root into the container
+      - .:/usr/src/fairlady
+      
+      # ESSENTIAL: Mount an empty, anonymous volume over the IPFS data folder.
+      # Because this has no "host path" on the left side of a colon, Docker creates 
+      # an empty folder here INSIDE the Rust container, completely shadowing the IPFS data.
+      # this is important because we have another container (Kubo's) also writing data to the local fairlady folder
+      # kubo -writes-> localfs -writes-> fairlady.
+      # We will NOT share folders between fairlady and kubo. Comunication's exclusevely over Kubo's RPC api
+      - /usr/src/fairlady/kubo_node/data
+      
+    environment:
+      - CARGO_TARGET_DIR=/usr/src/fairlady/target_docker
+    depends_on:
+      - kubo_node

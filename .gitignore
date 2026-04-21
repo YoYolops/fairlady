@@ -12,6 +12,7 @@
 # Added by cargo
 
 /target
+/target_docker
 /observed
 
 kubo_node/data/

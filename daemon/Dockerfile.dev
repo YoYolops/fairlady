@@ -1,0 +1,13 @@
+FROM rust:1.95-trixie
+
+RUN apt-get update && apt-get install -y \
+    net-tools \
+    iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /usr/src/fairlady
+
+# Instead of running the program immediately, we tell the container 
+# to just stay alive in the background indefinitely. 
+# This allows you to attach your terminal to it and run commands manually.
+CMD ["tail", "-f", "/dev/null"]
