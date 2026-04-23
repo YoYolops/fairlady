@@ -13,11 +13,7 @@ repository = "https://github.com/YoYolops/fairlady"
 anyhow = "1.0.100"
 thiserror = "2"
 tokio = { version = "1.47.1", features = ["full"] }
-aes-gcm = "0.10"
-base64 = "0.22"
-hex = "0.4"
-p256 = { version = "0.13", features = ["ecdsa", "pkcs8", "pem"] }
-rand_core = { version = "0.10" }
-rand = { version = "0.10" }
-rsa = { version = "0.9", features = ["sha2", "pem"] }
-sha2 = "0.11"
+rsa = "0.9"
+p256 = { version = "0.13", features = ["ecdsa", "pem"] }
+rand = "0.8"
+pkcs8 = { version = "0.10", features = ["pem"] }

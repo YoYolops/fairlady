@@ -19,4 +19,4 @@
 kubo_node/data/
 
 # Sensitive data
-secrets.txt
+/data/*
