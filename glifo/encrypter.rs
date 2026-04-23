@@ -7,7 +7,7 @@ use p256::{
     ecdsa::{signature::Signer, signature::Verifier, Signature, SigningKey, VerifyingKey},
     pkcs8::{DecodePrivateKey, DecodePublicKey, EncodePrivateKey, EncodePublicKey},
 };
-use rand_core::{OsRng, TryRngCore};
+use rand_core::{Rng, TryRng};
 use rsa::{
     pkcs8::{
         DecodePrivateKey as RsaDecodePrivateKey, DecodePublicKey as RsaDecodePublicKey,
@@ -35,7 +35,7 @@ pub struct KeyBundle {
 pub fn generate_keys() -> KeyBundle {
     // ── RSA-2048 (recipient) ────────────────────────────────────────────────
     let rsa_private =
-        RsaPrivateKey::new(&mut OsRng.unwrap_mut(), 2048).expect("failed to generate RSA private key");
+        RsaPrivateKey::new(&mut Rng::unwrap_mut(), 2048).expect("failed to generate RSA private key");
     let rsa_public = RsaPublicKey::from(&rsa_private);
 
     let recipient_rsa_private_pem = rsa_private
@@ -48,7 +48,7 @@ pub fn generate_keys() -> KeyBundle {
         .expect("failed to encode RSA public key");
 
     // ── ECDSA P-256 (sender) ───────────────────────────────────────────────
-    let ecdsa_signing_key = SigningKey::random(&mut OsRng.unwrap_mut());
+    let ecdsa_signing_key = SigningKey::random(&mut Rng::unwrap_mut());
     let ecdsa_verifying_key = VerifyingKey::from(&ecdsa_signing_key);
 
     let sender_ecdsa_private_pem = ecdsa_signing_key
@@ -114,7 +114,7 @@ pub fn encrypt(
     // 2. Generate a random 256-bit AES session key
     let session_key_bytes: [u8; 32] = {
         let mut k = [0u8; 32];
-        OsRng.try_fill_bytes(&mut k).expect("OsRng failed");
+        Rng::try_fill_bytes(&mut k).expect("Rng failed");
         k
     };
 
@@ -125,7 +125,7 @@ pub fn encrypt(
 
     let nonce_bytes: [u8; 12] = {
         let mut n = [0u8; 12];
-        OsRng.try_fill_bytes(&mut n).expect("OsRng failed");
+        Rng::try_fill_bytes(&mut n).expect("Rng failed");
         n
     };
     let nonce = Nonce::from_slice(&nonce_bytes);
@@ -148,7 +148,7 @@ pub fn encrypt(
         .expect("failed to parse recipient RSA public key");
 
     let encrypted_session_key = rsa_public
-        .encrypt(&mut OsRng.unwrap_mut(), Oaep::new::<Sha256>(), &session_key_bytes)
+        .encrypt(&mut Rng::unwrap_mut(), Oaep::new::<Sha256>(), &session_key_bytes)
         .expect("RSA-OAEP encryption of session key failed");
 
     let encrypted_session_key_b64 = BASE64.encode(&encrypted_session_key);
