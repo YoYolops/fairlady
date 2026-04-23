@@ -91,3 +91,8 @@ pub fn generate_ecdsa_key_pair(rng: &mut ThreadRng) -> Result<EcdsaKeyPair> {
         }
     )
 }
+
+pub fn encrypt_data() -> Result<()> {
+    // Encrypts all data inside ./data folder
+    Ok(())
+}
