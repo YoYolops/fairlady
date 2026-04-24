@@ -1,6 +1,6 @@
 #Copyright (C) 2025-2026 Yohan Lopes Rodrigues. AGPLv3 license.
 [workspace]
-members = ["glifo", "daemon"]
+members = ["glifo", "daemon", "commom"]
 resolver = "3"
 
 [workspace.package]
@@ -17,3 +17,6 @@ rsa = "0.9"
 p256 = { version = "0.13", features = ["ecdsa", "pem"] }
 rand = "0.8"
 pkcs8 = { version = "0.10", features = ["pem"] }
+aes-gcm = "0.10"
+sha2 = "0.11"
+tar = "0.4"

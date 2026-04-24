@@ -1,0 +1,1 @@
+pub const DATA_FOLDER_PATH: &str = "./data"; // Relative to where the binary is ran
