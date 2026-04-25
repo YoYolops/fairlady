@@ -5,10 +5,11 @@ use tokio::{
     task::{self, JoinHandle},
 };
 use aes_gcm::{
-    aead::{KeyInit, OsRng},
-    Aes256Gcm, Key
+    aead::{KeyInit, OsRng, Aead, AeadCore},
+    Aes256Gcm, Key, Nonce
 };
 use rsa::{
+    Oaep,
     RsaPrivateKey,
     RsaPublicKey,
     pkcs8::{
@@ -47,7 +48,6 @@ pub struct EcdsaKeyPair {
 pub struct Credentials {
     rsa: RsaKeyPair,
     ecdsa: EcdsaKeyPair,
-    aes: Zeroizing<[u8; AES_KEY_SIZE]>,
 }
 
 // Creates key credentials for every algorithm the system requires.
@@ -66,13 +66,11 @@ pub async fn handle_credentials() -> Result<Credentials> {
 
     let rsa_credentials: RsaKeyPair = rsa_result??;
     let ecdsa_credentials: EcdsaKeyPair = ecdsa_result??;
-    let aes_key: [u8; 32] = generate_aes_gcm_key();
 
     Ok(
         Credentials {
             rsa: rsa_credentials,
-            ecdsa: ecdsa_credentials,
-            aes: Zeroizing::new(aes_key),
+            ecdsa: ecdsa_credentials
         }
     )
 }
@@ -131,13 +129,28 @@ async fn folder_to_tar_bytes(folder_path: PathBuf) -> Result<Vec<u8>> {
     Ok(tar_result)
 }
 
-pub async fn encrypt_data() -> Result<()> {
+pub async fn encrypt_data(credentials: Credentials) -> Result<()> {
     // Encrypts all data inside ./data folder
     let userdata_path = commom::info::get_userdata_path()?;
     let tar_data = folder_to_tar_bytes(userdata_path).await?;
-    for byte in tar_data {
-        print!("{:02x} ", byte);
-    }
+
+    // Ensure message integrity
+    let tar_data_hash = Sha256::digest(&tar_data);
+
+    // Ensure confidentiality
+    let aes_session_key = Zeroizing::new(generate_aes_gcm_key());
+    let cipher = Aes256Gcm::new_from_slice(aes_session_key.as_ref())?;
+    let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
+    let encrypted_data = cipher.encrypt(&nonce, tar_data.as_ref());
+
+    // Safe aes key sharing
+    let mut rng = thread_rng();
+    let padding = Oaep::new::<Sha256>();
+    let signed_key = credentials.rsa.public.encrypt(&mut rng, padding, aes_session_key.as_ref());
+
+    // Enrure authenticity
+    
+
     println!();
     Ok(())
 }
