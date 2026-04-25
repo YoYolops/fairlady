@@ -1,33 +1,12 @@
 use std::path::PathBuf;
 
-use tokio::{
-    self,
-    task::{self, JoinHandle},
-};
+use tokio::task;
 use aes_gcm::{
     aead::{KeyInit, OsRng, Aead, AeadCore},
-    Aes256Gcm, Key, Nonce
-};
-use rsa::{
-    Oaep,
-    RsaPrivateKey,
-    RsaPublicKey,
-    pkcs8::{
-        EncodePrivateKey,
-        EncodePublicKey,
-        LineEnding
-    }
+    Aes256Gcm, Key
 };
 use pkcs8::der::zeroize::Zeroizing;
-use p256::{
-    ecdsa::{
-        SigningKey,
-        VerifyingKey
-    }
-};
-use rand::{rngs::ThreadRng, thread_rng};
 use anyhow::Result;
-use sha2::{Sha256, Digest};
 use commom;
 
 const AES_KEY_SIZE: usize = 32;
@@ -66,20 +45,16 @@ async fn folder_to_tar_bytes(folder_path: PathBuf) -> Result<Vec<u8>> {
     Ok(tar_result)
 }
 
-pub async fn encrypt_data(credentials: Credentials) -> Result<()> {
+pub async fn encrypt_data(credentials: Credentials) -> Result<Vec<u8>> {
     // Encrypts all data inside ./data folder
     let userdata_path = commom::info::get_userdata_path()?;
     let tar_data = folder_to_tar_bytes(userdata_path).await?;
 
-    // Ensure message integrity
-    let tar_data_hash = Sha256::digest(&tar_data);
-
-    // Ensure confidentiality
     let aes_session_key = credentials.aes.as_ref();
-    let cipher = Aes256Gcm::new_from_slice(aes_session_key)?;
+    let cipher = Aes256Gcm::new_from_slice(aes_session_key)
+        .expect("Failed to build key from bytes");
     let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
-    let encrypted_data = cipher.encrypt(&nonce, tar_data.as_ref());
-
-    println!();
-    Ok(())
+    let encrypted_data = cipher.encrypt(&nonce, tar_data.as_ref())
+        .expect("Failed to encrypt data");
+    Ok(encrypted_data)
 }
