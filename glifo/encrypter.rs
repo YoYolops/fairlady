@@ -49,7 +49,14 @@ pub async fn encrypt_data(credentials: Credentials) -> Result<Vec<u8>> {
     // Encrypts all data inside ./data folder
     let userdata_path = commom::info::get_userdata_path()?;
     let tar_data = folder_to_tar_bytes(userdata_path).await?;
-
+    let hex_string = &tar_data
+        .iter()
+        .map(|b| format!("{:02x}", b))
+        .collect::<Vec<String>>()
+        .join(" ");
+    println!("~ RAW DATA ~");
+    println!("{}", hex_string);
+    println!("~ END ~");
     let aes_session_key = credentials.aes.as_ref();
     let cipher = Aes256Gcm::new_from_slice(aes_session_key)
         .expect("Failed to build key from bytes");
