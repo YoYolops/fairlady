@@ -2,7 +2,11 @@
 // Given a hard-coded file path, encrypt it and send to Kubo node via RPC
 // Given an CID, retrieve a file from network and decrypt it
 use glifo::encrypter::{self, encrypt_data};
-use commom::{ipfs_adapter, kubo::KuboAddResponse};
+use commom::{
+    ipfs_adapter,
+    kubo::KuboAddResponse,
+    constants::KUBO_DEFAULT_MFS_DESTINATION_PATH
+};
 use anyhow::Result;
 
 use tokio;
@@ -23,6 +27,10 @@ async fn main() -> Result<()> {
         println!("SENDING TO KUBO IPFS NODE");
         let json_response: KuboAddResponse = ipfs_adapter::upload_data_kubo(data).await?;
         println!("Kubo Response: {:#?}", json_response);
+        println!("Linking to MFS...");
+        let filename = json_response.name?;
+        ipfs_adapter::delete_previous_link("/"+KUBO_DEFAULT_MFS_DESTINATION_PATH);
+        ipfs_adapter::link_data_to_kubo_mfs(&json_response.cid, &filename);
     } else {
         eprintln!("Error encrypting data");
     };

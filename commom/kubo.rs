@@ -18,7 +18,7 @@ pub struct KuboAddResponse {
     _mtime_nsecs: Option<i32>,
 
     #[serde(rename = "Name")]
-    _name: Option<String>,
+    pub name: Option<String>,
 
     #[serde(rename = "Size")]
     _size: Option<String>,
