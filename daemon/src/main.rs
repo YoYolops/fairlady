@@ -7,7 +7,7 @@ use commom::{
     kubo::KuboAddResponse,
     constants::KUBO_DEFAULT_MFS_DESTINATION_PATH
 };
-use anyhow::Result;
+use anyhow::{Result, bail};
 
 use tokio;
 
@@ -28,9 +28,13 @@ async fn main() -> Result<()> {
         let json_response: KuboAddResponse = ipfs_adapter::upload_data_kubo(data).await?;
         println!("Kubo Response: {:#?}", json_response);
         println!("Linking to MFS...");
-        let filename = json_response.name?;
-        ipfs_adapter::delete_previous_link("/"+KUBO_DEFAULT_MFS_DESTINATION_PATH);
-        ipfs_adapter::link_data_to_kubo_mfs(&json_response.cid, &filename);
+        let filename = if let Some(name) = json_response.name {
+            name
+        } else {
+           String::from("data.bin") 
+        };
+        ipfs_adapter::delete_previous_link(&format!("/{}", KUBO_DEFAULT_MFS_DESTINATION_PATH)).await?;
+        ipfs_adapter::link_data_to_kubo_mfs(&json_response.cid, &filename).await?;
     } else {
         eprintln!("Error encrypting data");
     };

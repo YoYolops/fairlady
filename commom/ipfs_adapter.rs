@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use reqwest::{self, multipart};
 use anyhow::{Result, bail};
 use crate::constants::{KUBO_RPC_BASE_URL, KUBO_DEFAULT_MFS_DESTINATION_PATH};
@@ -25,7 +23,7 @@ pub async fn upload_data_kubo(data: Vec<u8>) -> Result<KuboAddResponse> {
     Ok(kubo_parsed_response_body)
 }
 
-pub async fn link_data_to_kubo_mfs(cid: &str, filename: &str) {
+pub async fn link_data_to_kubo_mfs(cid: &str, filename: &str) -> Result<()> {
     let http_client = reqwest::Client::new();
     let url = format!("{}/{}/{}", KUBO_RPC_BASE_URL, "files", "cp");
     let source_path = format!("/ipfs/{}", cid);
@@ -40,7 +38,8 @@ pub async fn link_data_to_kubo_mfs(cid: &str, filename: &str) {
         .send()
         .await?;
 
-    if !response.is_success() {
+    let status = response.status();
+    if !status.is_success() {
         let error_text = response.text().await?;
         bail!("Failed to link data to MFS: {}", error_text);
     };
@@ -52,7 +51,7 @@ pub async fn link_data_to_kubo_mfs(cid: &str, filename: &str) {
 pub async fn delete_previous_link(mfs_path: &str) -> Result<()> {
     let http_client = reqwest::Client::new();
     let url = format!("{}/{}/{}", KUBO_RPC_BASE_URL, "files", "rm");
-    http_client
+    let _ = http_client
         .post(url)
         .query(&[
             ("arg", &mfs_path),
