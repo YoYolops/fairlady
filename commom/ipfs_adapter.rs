@@ -10,7 +10,7 @@ pub async fn upload_data_kubo(data: Vec<u8>) -> Result<KuboAddResponse> {
     let form = multipart::Form::new().part("file", part);
     
     let kubo_response = http_client
-        .post(KUBO_RPC_BASE_URL)
+        .post(format!("{}/{}", KUBO_RPC_BASE_URL, "add"))
         .multipart(form)
         .send()
         .await?;
