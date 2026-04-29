@@ -20,3 +20,4 @@ kubo_node/data/
 
 # Sensitive data
 /data/*
+.fairlady

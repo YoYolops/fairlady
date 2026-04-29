@@ -14,3 +14,4 @@ tokio = { workspace = true }
 pkcs8 = { workspace = true }
 aes-gcm = { workspace = true }
 tar = { workspace = true }
+compactly = { workspace = true }
