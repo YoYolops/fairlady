@@ -42,7 +42,6 @@ pub fn generate_aes_gcm_key() -> [u8; AES_KEY_SIZE] {
 }
 
 pub async fn search_existent_keys() -> Result<Option<Credentials>> {
-    fs::create_dir_all(SYSTEM_DATA_FOLDER_PATH).await?; // ensures folder existence
     let folder = Path::new(SYSTEM_DATA_FOLDER_PATH);
     let file = folder.join(KEYS_FILENAME);
     {
@@ -69,7 +68,6 @@ pub async fn save_credentials_to_fs(credentials: &Credentials) -> Result<()> {
     let encoded_credentials = compactly::v1::encode(&SCredentials {
         aes: *credentials.aes
     });
-    fs::create_dir_all(SYSTEM_DATA_FOLDER_PATH).await?; // ensures folder existence
     fs::write(
         &format!("{}/{}", SYSTEM_DATA_FOLDER_PATH, KEYS_FILENAME),
         encoded_credentials

@@ -2,6 +2,8 @@
 // Given a hard-coded file path, encrypt it and send to Kubo node via RPC => DONE
 // Given an CID, retrieve a file from network and decrypt it
 // IMPORTANT: Need to watch data folder to be worthy of the daemon title
+mod startup;
+
 use glifo::{
     credentials::{self, Credentials}, encrypter::encrypt_data
 };
@@ -12,9 +14,11 @@ use commom::{
 };
 use anyhow::{Result};
 use tokio;
+use startup::system_startup;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    system_startup().await?;
     let credentials = credentials::handle_credentials().await?;
     encrypt_and_upload_system_data(credentials).await?;
     Ok(())
