@@ -15,7 +15,7 @@ pub struct Credentials {
     pub aes: Zeroizing<[u8; AES_KEY_SIZE]>,
 }
 
-#[derive(Default, compactly::v1::Encode)]
+#[derive(Default, compactly::v1::Encode, Debug)]
 pub struct SCredentials {
     // struct to serialize credentials. Serializing Zeroizing type with compactly is problematic
     pub aes: [u8; AES_KEY_SIZE],
@@ -57,6 +57,8 @@ pub async fn search_existent_keys() -> Result<Option<Credentials>> {
     }
     let encoded_credentials = fs::read(file).await?;
     if let Some(credentials) = compactly::v1::decode::<SCredentials>(&encoded_credentials) {
+        println!("FOUND CREDENTIALS");
+        println!("{:#?}", credentials);
         return Ok(Some(Credentials {
             aes: Zeroizing::new(credentials.aes)
         }))
