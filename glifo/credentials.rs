@@ -4,9 +4,9 @@ use aes_gcm::{
 };
 use std::path::Path;
 use pkcs8::der::zeroize::Zeroizing;
-use anyhow::{Result, bail};
+use anyhow::{Result};
 use commom::constants::SYSTEM_DATA_FOLDER_PATH;
-use tokio::fs;
+use tokio::{fs, task};
 
 const AES_KEY_SIZE: usize = 32;
 const KEYS_FILENAME: &str = "keys";
@@ -17,17 +17,22 @@ pub struct Credentials {
 
 #[derive(Default, compactly::v1::Encode)]
 pub struct SCredentials {
+    // struct to serialize credentials. Serializing Zeroizing type with compactly is problematic
     pub aes: [u8; AES_KEY_SIZE],
 }
 
-// Creates key credentials for every algorithm the system requires.
-// future work: store generated credentials and checkup if already existent on startup
 pub async fn handle_credentials() -> Result<Credentials> {
-    Ok(
-        Credentials {
-            aes: Zeroizing::new(generate_aes_gcm_key())
-        }
-    )
+    let existent_credentials_handler = task::spawn(search_existent_keys());
+    let new_key = generate_aes_gcm_key();
+
+    if let Some(credentials) = existent_credentials_handler.await?? {
+        return Ok(credentials)
+    };
+    let credentials = Credentials {
+        aes: Zeroizing::new(new_key)
+    };
+    save_credentials_to_fs(&credentials).await?;
+    Ok(credentials)
 }
 
 pub fn generate_aes_gcm_key() -> [u8; AES_KEY_SIZE] {
@@ -37,19 +42,19 @@ pub fn generate_aes_gcm_key() -> [u8; AES_KEY_SIZE] {
 }
 
 pub async fn search_existent_keys() -> Result<Option<Credentials>> {
+    fs::create_dir_all(SYSTEM_DATA_FOLDER_PATH).await?; // ensures folder existence
     let folder = Path::new(SYSTEM_DATA_FOLDER_PATH);
     let file = folder.join(KEYS_FILENAME);
     {
-        let metadata = fs::metadata(&folder).await?;
-        if !metadata.is_dir() {
-            return  Ok(None)
-        }
+        if let Ok(metadata) = fs::metadata(&folder).await {
+            if !metadata.is_dir() { return Ok(None) };
+        } else { return Ok(None) };
     }
     {
-        let metadata = fs::metadata(&file).await?;
-        if !metadata.is_file() {
-            return  Ok(None)
-        }
+        if let Ok(metadata) = fs::metadata(&file).await {
+            if !metadata.is_file() { return Ok(None) };
+        } else { return Ok(None) };
+
     }
     let encoded_credentials = fs::read(file).await?;
     if let Some(credentials) = compactly::v1::decode::<SCredentials>(&encoded_credentials) {
@@ -57,13 +62,14 @@ pub async fn search_existent_keys() -> Result<Option<Credentials>> {
             aes: Zeroizing::new(credentials.aes)
         }))
     }
-    bail!("Could not decode keys. Corrupted file or unknown format");
+    Ok(None)
 }
 
-pub async fn save_credentials_to_fs(credentials: Credentials) -> Result<()> {
+pub async fn save_credentials_to_fs(credentials: &Credentials) -> Result<()> {
     let encoded_credentials = compactly::v1::encode(&SCredentials {
         aes: *credentials.aes
     });
+    fs::create_dir_all(SYSTEM_DATA_FOLDER_PATH).await?; // ensures folder existence
     fs::write(
         &format!("{}/{}", SYSTEM_DATA_FOLDER_PATH, KEYS_FILENAME),
         encoded_credentials

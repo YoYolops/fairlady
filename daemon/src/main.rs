@@ -3,8 +3,7 @@
 // Given an CID, retrieve a file from network and decrypt it
 // IMPORTANT: Need to watch data folder to be worthy of the daemon title
 use glifo::{
-    encrypter::{encrypt_data},
-    credentials
+    credentials::{self, Credentials}, encrypter::encrypt_data
 };
 use commom::{
     ipfs_adapter,
@@ -16,22 +15,13 @@ use tokio;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    encrypt_and_upload_system_data().await?;
+    let credentials = credentials::handle_credentials().await?;
+    encrypt_and_upload_system_data(credentials).await?;
     Ok(())
 }
 
-async fn encrypt_and_upload_system_data() -> Result<()> {
-    let system_credentials = credentials::handle_credentials().await?;
+async fn encrypt_and_upload_system_data(system_credentials: Credentials) -> Result<()> {
     if let Ok(data) = encrypt_data(system_credentials).await {
-        let hex_string = data
-            .iter()
-            .map(|b| format!("{:02x}", b))
-            .collect::<Vec<String>>()
-            .join(" ");
-        println!("~ RAW ENCRYPTED DATA ~");
-        println!("{}", hex_string);
-        println!("~ END ~");
-        println!();
         println!("SENDING TO KUBO IPFS NODE");
         let json_response: KuboAddResponse = ipfs_adapter::upload_data_kubo(data).await?;
         println!("Kubo Response: {:#?}", json_response);
