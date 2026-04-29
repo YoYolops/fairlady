@@ -11,6 +11,7 @@ pub async fn upload_data_kubo(data: Vec<u8>) -> Result<KuboAddResponse> {
     
     let kubo_response = http_client
         .post(format!("{}/{}", KUBO_RPC_BASE_URL, "add"))
+        .query(&[("pin", "false")]) // Make file succetible to Kubo's GC unless linked to MFS
         .multipart(form)
         .send()
         .await?;

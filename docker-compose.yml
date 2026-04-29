@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: kubo_node
     restart: always
+    command: ["daemon", "--migrate=true", "--agent-version-suffix=docker", "--enable-gc"]
     ports:
       - "4001:4001/tcp"
       - "4001:4001/udp"
@@ -22,7 +23,6 @@ services:
     volumes:
       # 1. Mount the ENTIRE workspace root into the container
       - .:/usr/src/fairlady
-      
       # ESSENTIAL: Mount an empty, anonymous volume over the IPFS data folder.
       # Because this has no "host path" on the left side of a colon, Docker creates 
       # an empty folder here INSIDE the Rust container, completely shadowing the IPFS data.
