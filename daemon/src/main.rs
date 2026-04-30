@@ -5,7 +5,7 @@
 mod startup;
 
 use glifo::{
-    credentials::{self, Credentials}, encrypter::encrypt_data
+    credentials::{self, Credentials}, encrypter::encrypt_user_data
 };
 use commom::{
     ipfs_adapter,
@@ -24,8 +24,12 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+async fn decrypt_and_save_foreign_data() -> Result<()> {
+    Ok(())
+}
+
 async fn encrypt_and_upload_system_data(system_credentials: Credentials) -> Result<()> {
-    if let Ok(data) = encrypt_data(system_credentials).await {
+    if let Ok(data) = encrypt_user_data(system_credentials).await {
         println!("SENDING TO KUBO IPFS NODE");
         let json_response: KuboAddResponse = ipfs_adapter::upload_data_kubo(data).await?;
         println!("Kubo Response: {:#?}", json_response);

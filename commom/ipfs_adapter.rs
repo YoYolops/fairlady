@@ -62,3 +62,7 @@ pub async fn delete_previous_link(mfs_path: &str) -> Result<()> {
         .await;
     Ok(())
 }
+
+pub async fn download_foreign_data() -> Result<()> {
+    Ok(())
+}

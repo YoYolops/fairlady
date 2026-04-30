@@ -1,6 +1,7 @@
 // Fair lady fs interaction paths
 pub const DATA_FOLDER_PATH: &str = "./data"; // Relative to where the binary is ran
 pub const SYSTEM_DATA_FOLDER_PATH: &str = "./.fairlady";
+pub const SYSTEM_FOREIGN_DATA_PATH: &str = "./.fairlady/foreign";
 
 // IPFS related
 pub const KUBO_RPC_BASE_URL: &str = "http://kubo_node:5001/api/v0";
