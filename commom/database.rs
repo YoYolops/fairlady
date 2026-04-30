@@ -1,5 +1,7 @@
 use anyhow::{Result, Context};
 use sqlx::{self, SqlitePool, FromRow};
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
+use crate::constants::SYSTEM_DATABASE_PATH;
 
 #[derive(Debug, FromRow)]
 pub struct HistoryRecord {
@@ -7,22 +9,49 @@ pub struct HistoryRecord {
     pub timestamp: i64
 }
 
-pub async fn get_last_history_record(pool: &SqlitePool) -> Result<Option<HistoryRecord>> {
-    let record = sqlx::query_as::<_, HistoryRecord>(
-        "SELECT * FROM history WHERE timestamp = MAX(SELECT timestamp FROM history)"
-    )
-        .fetch_optional(pool)
-        .await?;
-    Ok(record)
+pub struct Database {
+    pub pool: SqlitePool
 }
 
-pub async fn add_to_history(pool: &SqlitePool, cid: &str) -> Result<()> {
-    sqlx::query(
-        "INSERT INTO history (cid) VALUES (?)"
-    )
-        .bind(cid)
-        .execute(pool)
-        .await
-        .context("FAILED inserting data into history")?;
-    Ok(())
+impl Database {
+    pub async fn build(existent_pool: Option<SqlitePool>) -> Result<Self> {
+        match existent_pool {
+            Some(pool) => Ok(Database { pool: pool }),
+            None => {
+                let connection_options = SqliteConnectOptions::new()
+                    .filename(SYSTEM_DATABASE_PATH)
+                    .create_if_missing(true);
+                let pool = SqlitePoolOptions::new()
+                    .max_connections(5)
+                    .connect_with(connection_options)
+                    .await?;
+                Ok(
+                    Database {
+                        pool: pool
+                    }
+                )
+            }
+        }
+    }
+
+    pub async fn get_last_history_record(&self) -> Result<Option<HistoryRecord>> {
+        let record = sqlx::query_as::<_, HistoryRecord>(
+            "SELECT * FROM history WHERE timestamp = MAX(SELECT timestamp FROM history)"
+        )
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(record)
+    }
+
+    pub async fn add_to_history(pool: &SqlitePool, cid: &str) -> Result<()> {
+        sqlx::query(
+            "INSERT INTO history (cid) VALUES (?)"
+        )
+            .bind(cid)
+            .execute(pool)
+            .await
+            .context("FAILED inserting data into history")?;
+        Ok(())
+    }
 }
+

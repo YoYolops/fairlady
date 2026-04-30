@@ -4,10 +4,10 @@ use sqlx::SqlitePool;
 use commom::constants::{SYSTEM_DATABASE_PATH, SYSTEM_FOREIGN_DATA_PATH};
 use tokio::fs;
 
-pub async fn system_startup() -> Result<()> {
+pub async fn system_startup() -> Result<SqlitePool> {
     fs::create_dir_all(SYSTEM_FOREIGN_DATA_PATH).await?; // ensures folder existence
-    init_db().await?;
-    Ok(())
+    let built_pool = init_db().await?;
+    Ok(built_pool)
 }
 
 async fn init_db() -> Result<SqlitePool> {

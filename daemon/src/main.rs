@@ -8,9 +8,10 @@ use glifo::{
     credentials::{self, Credentials}, encrypter::encrypt_user_data
 };
 use commom::{
+    constants::KUBO_DEFAULT_MFS_DESTINATION_PATH,
+    database::{Database},
     ipfs_adapter,
-    kubo::KuboAddResponse,
-    constants::KUBO_DEFAULT_MFS_DESTINATION_PATH
+    kubo::KuboAddResponse
 };
 use anyhow::{Result};
 use tokio;
@@ -18,9 +19,10 @@ use startup::system_startup;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    system_startup().await?;
+    let pool = system_startup().await?;
     let credentials = credentials::handle_credentials().await?;
-    encrypt_and_upload_system_data(credentials).await?;
+    let database = Database::build(Some(pool)).await?;
+    encrypt_and_upload_system_data(credentials, database).await?;
     Ok(())
 }
 
@@ -28,7 +30,7 @@ async fn decrypt_and_save_foreign_data() -> Result<()> {
     Ok(())
 }
 
-async fn encrypt_and_upload_system_data(system_credentials: Credentials) -> Result<()> {
+async fn encrypt_and_upload_system_data(system_credentials: Credentials, database: Database) -> Result<()> {
     if let Ok(data) = encrypt_user_data(system_credentials).await {
         println!("SENDING TO KUBO IPFS NODE");
         let json_response: KuboAddResponse = ipfs_adapter::upload_data_kubo(data).await?;
