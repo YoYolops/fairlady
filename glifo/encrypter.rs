@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use tokio::{task, fs};
+use tokio::{task};
 use std::io::Cursor;
 use tar::Archive;
 use aes_gcm::{

@@ -39,8 +39,7 @@ pub async fn link_data_to_kubo_mfs(cid: &str, filename: &str) -> Result<()> {
         .send()
         .await?;
 
-    let status = response.status();
-    if !status.is_success() {
+    if !response.status().is_success() {
         let error_text = response.text().await?;
         bail!("Failed to link data to MFS: {}", error_text);
     };
@@ -64,5 +63,6 @@ pub async fn delete_previous_link(mfs_path: &str) -> Result<()> {
 }
 
 pub async fn download_foreign_data() -> Result<()> {
+
     Ok(())
 }
