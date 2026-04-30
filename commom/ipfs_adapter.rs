@@ -1,6 +1,7 @@
 use reqwest::{self, multipart};
 use anyhow::{Result, bail};
 use crate::constants::{KUBO_RPC_BASE_URL, KUBO_DEFAULT_MFS_DESTINATION_PATH};
+use crate::database::Database;
 use crate::kubo::KuboAddResponse;
 
 pub async fn upload_data_kubo(data: Vec<u8>) -> Result<KuboAddResponse> {
@@ -62,7 +63,7 @@ pub async fn delete_previous_link(mfs_path: &str) -> Result<()> {
     Ok(())
 }
 
-pub async fn download_foreign_data() -> Result<()> {
-
+pub async fn download_foreign_data(cid: &str) -> Result<()> {
+    
     Ok(())
 }

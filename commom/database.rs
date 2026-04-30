@@ -9,8 +9,9 @@ pub struct HistoryRecord {
     pub timestamp: i64
 }
 
+#[derive(Clone)]
 pub struct Database {
-    pub pool: SqlitePool
+    pub pool: SqlitePool // Implements Arc internally. Thread safe.
 }
 
 impl Database {
@@ -36,19 +37,19 @@ impl Database {
 
     pub async fn get_last_history_record(&self) -> Result<Option<HistoryRecord>> {
         let record = sqlx::query_as::<_, HistoryRecord>(
-            "SELECT * FROM history WHERE timestamp = MAX(SELECT timestamp FROM history)"
+            "SELECT * FROM history WHERE timestamp = (SELECT MAX(timestamp) FROM history) LIMIT 1"
         )
             .fetch_optional(&self.pool)
             .await?;
         Ok(record)
     }
 
-    pub async fn add_to_history(pool: &SqlitePool, cid: &str) -> Result<()> {
+    pub async fn add_to_history(&self, cid: &str) -> Result<()> {
         sqlx::query(
             "INSERT INTO history (cid) VALUES (?)"
         )
             .bind(cid)
-            .execute(pool)
+            .execute(&self.pool)
             .await
             .context("FAILED inserting data into history")?;
         Ok(())
