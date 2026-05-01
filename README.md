@@ -1,3 +1,5 @@
+![Fairlady logo. The birth of venus](./docs/fairlady.png)
+
 ### TO DO:
 (Currently, at every run, new aes key is created)
 1. DONE: Create a function to check if credentials are already created inside ./data;

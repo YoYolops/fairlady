@@ -1,6 +1,7 @@
 // Create a glifo implementation for at least two cryptographic algorithms
 // IMPORTANT: Need to watch data folder to be worthy of the daemon title
 mod startup;
+mod watcher;
 
 use anyhow::{Context, Result, bail};
 use commom::{
@@ -19,7 +20,7 @@ async fn main() -> Result<()> {
     let pool = system_startup().await?;
     let credentials = credentials::handle_credentials().await?;
     let database = Database::build(Some(pool)).await?;
-    encrypt_and_upload_system_data(&credentials, &database).await?;
+    //encrypt_and_upload_system_data(&credentials, &database).await?;
     decrypt_and_save_foreign_data(&credentials, &database).await?;
 
     Ok(())

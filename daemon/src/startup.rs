@@ -5,7 +5,7 @@ use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use tokio::fs;
 
 pub async fn system_startup() -> Result<SqlitePool> {
-    fs::create_dir_all(SYSTEM_FOREIGN_DATA_PATH).await?; // ensures folder existence
+    fs::create_dir_all(SYSTEM_FOREIGN_DATA_PATH).await?; // ensures folders existence
     let built_pool = init_db().await?;
     Ok(built_pool)
 }
