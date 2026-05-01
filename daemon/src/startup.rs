@@ -1,7 +1,7 @@
-use anyhow::{Result};
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
-use sqlx::SqlitePool;
+use anyhow::Result;
 use commom::constants::{SYSTEM_DATABASE_PATH, SYSTEM_FOREIGN_DATA_PATH};
+use sqlx::SqlitePool;
+use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use tokio::fs;
 
 pub async fn system_startup() -> Result<SqlitePool> {
@@ -19,15 +19,15 @@ async fn init_db() -> Result<SqlitePool> {
         .connect_with(connection_options)
         .await?;
     sqlx::query(
-            r#"
+        r#"
             CREATE TABLE IF NOT EXISTS history (
                 cid TEXT PRIMARY KEY,
                 -- Stores the exact seconds since the Unix Epoch:
                 timestamp INTEGER DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
             );
             "#,
-        )
-        .execute(&pool)
-        .await?;
+    )
+    .execute(&pool)
+    .await?;
     Ok(pool)
 }

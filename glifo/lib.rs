@@ -1,2 +1,2 @@
-pub mod encrypter;
 pub mod credentials;
+pub mod encrypter;
