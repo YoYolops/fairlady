@@ -2,6 +2,7 @@
 // IMPORTANT: Need to watch data folder to be worthy of the daemon title
 mod startup;
 mod watcher;
+mod dispatcher;
 
 use anyhow::{Context, Result, bail};
 use commom::{
@@ -13,16 +14,25 @@ use glifo::{
     encrypter::{self, encrypt_user_data},
 };
 use startup::system_startup;
-use tokio;
-
+use tokio::{self, sync::mpsc::{self, Receiver}, task};
 #[tokio::main]
 async fn main() -> Result<()> {
     let pool = system_startup().await?;
     let credentials = credentials::handle_credentials().await?;
     let database = Database::build(Some(pool)).await?;
-    //encrypt_and_upload_system_data(&credentials, &database).await?;
-    decrypt_and_save_foreign_data(&credentials, &database).await?;
 
+    let (watcher_transmitter, mut watcher_receiver) = mpsc::channel(32);
+    let _ = watcher::spawn_watcher(watcher_transmitter).await;
+    let watcher_receiver_task = dispatcher::spawn_dispatcher(watcher_receiver).await;
+    //encrypt_and_upload_system_data(&credentials, &database).await?;
+    //decrypt_and_save_foreign_data(&credentials, &database).await?;
+    match watcher_receiver_task.await? {
+        Ok(_) => println!("Fairlady daemon gracefully shutting down without errors. This is odd since the expectation is for it to live forever"),
+        Err(e) => {
+            println!("{:?}", e);
+            println!("CUMULUS Client gracefully exiting on error");
+        },
+    };
     Ok(())
 }
 
