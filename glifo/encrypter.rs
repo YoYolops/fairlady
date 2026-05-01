@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use bytes::Bytes;
 use tokio::{task};
 use std::io::Cursor;
 use tar::Archive;
@@ -25,7 +26,7 @@ async fn folder_to_tar_bytes(folder_path: PathBuf) -> Result<Vec<u8>> {
     Ok(tar_result)
 }
 
-pub async fn encrypt_user_data(credentials: Credentials) -> Result<Vec<u8>> {
+pub async fn encrypt_user_data(credentials: &Credentials) -> Result<Vec<u8>> {
     // Encrypts all data inside ./data folder
     let userdata_path = commom::info::get_userdata_path()?;
     let tar_data = folder_to_tar_bytes(userdata_path).await?;
@@ -37,11 +38,11 @@ pub async fn encrypt_user_data(credentials: Credentials) -> Result<Vec<u8>> {
         .expect("Failed to encrypt data");
     let mut payload = nonce.to_vec(); // prepend with nonce
     payload.extend_from_slice(&encrypted_data);
-    Ok(encrypted_data)
+    Ok(payload)
 }
 
-pub async fn decrypt_foreign_data(credentials: Credentials, encrypted_payload: &[u8]) -> Result<Vec<u8>> {
-    if encrypted_payload.len() < 12 {
+pub async fn decrypt_foreign_data(credentials: &Credentials, encrypted_payload: &[u8]) -> Result<Vec<u8>> {
+    if encrypted_payload.len() < 28 {
         bail!("Payload is too short to contain a valid nonce");
     }
     let (nonce_slice, ciphertext) = encrypted_payload.split_at(12); // extract nonce
@@ -50,10 +51,13 @@ pub async fn decrypt_foreign_data(credentials: Credentials, encrypted_payload: &
     let aes_session_key = credentials.aes.as_ref();
     let cipher = Aes256Gcm::new_from_slice(aes_session_key)
         .expect("Failed to build key from bytes");
-    let decrypted_tar_data = cipher.decrypt(&nonce, ciphertext)
-        .expect("Failed to decrypt data. Invalid key or corrupted payload.");
-
-    Ok(decrypted_tar_data)
+    match cipher.decrypt(&nonce, ciphertext) {
+        Ok(tar_data) => Ok(tar_data),
+        Err(e) => {
+            println!("{}", e);
+            bail!("failed while decrypting")
+        },
+    }
 }
 
 pub async fn store_foreign_data(tar_data: Vec<u8>) -> Result<()> {

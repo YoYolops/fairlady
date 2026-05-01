@@ -11,7 +11,7 @@ pub struct HistoryRecord {
 
 #[derive(Clone)]
 pub struct Database {
-    pub pool: SqlitePool // Implements Arc internally. Thread safe.
+    pub pool: SqlitePool // Implements Arc internally. Thread safe for reading.
 }
 
 impl Database {

@@ -1,5 +1,6 @@
-use reqwest::{self, multipart};
-use anyhow::{Result, bail};
+use reqwest::{self, multipart, Client};
+use anyhow::{Result, bail, Context};
+use bytes::Bytes;
 use crate::constants::{KUBO_RPC_BASE_URL, KUBO_DEFAULT_MFS_DESTINATION_PATH};
 use crate::database::Database;
 use crate::kubo::KuboAddResponse;
@@ -59,11 +60,27 @@ pub async fn delete_previous_link(mfs_path: &str) -> Result<()> {
             ("force", &"true")
         ])
         .send()
-        .await;
+        .await
+        .context("failed to make http request to kubo")?;
     Ok(())
 }
 
-pub async fn download_foreign_data(cid: &str) -> Result<()> {
-    
-    Ok(())
+pub async fn download_foreign_data(cid: &str) -> Result<Bytes> {
+    let client = Client::new();
+    let url = format!("{}/cat", KUBO_RPC_BASE_URL);
+
+    let response = client
+        .post(url)
+        .query(&[("arg", cid)])
+        .send()
+        .await
+        .context("failed to make http request to kubo")?;
+
+    if !response.status().is_success() {
+        let error_message = response.text().await?;
+        bail!("FAILED to fetch CID {}. Kubo error: {}", cid, error_message);
+    }
+
+    let raw_data = response.bytes().await?;
+    Ok(raw_data)
 }
