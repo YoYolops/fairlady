@@ -6,7 +6,7 @@ mod dispatcher;
 
 use anyhow::{Context, Result, bail};
 use commom::{
-    constants::KUBO_DEFAULT_MFS_DESTINATION_PATH, database::Database, ipfs_adapter::{self, UploadResponse},
+    constants::KUBO_DEFAULT_MFS_DESTINATION_PATH, database::Database, ipfs_adapter::{self, Metadata},
 };
 use glifo::{
     credentials::{self, Credentials},
@@ -59,7 +59,7 @@ async fn encrypt_and_upload_system_data(
     database: &Database,
 ) -> Result<()> {
     if let Ok(data) = encrypt_user_data(system_credentials).await {
-        let upload_response: UploadResponse = ipfs_adapter::upload_data_kubo(data).await?;
+        let upload_response: Metadata = ipfs_adapter::upload_data_kubo(data).await?;
         println!("Kubo Response: {:#?}", upload_response);
         println!("Linking to MFS...");
         ipfs_adapter::delete_previous_link(&format!("/{}", KUBO_DEFAULT_MFS_DESTINATION_PATH))

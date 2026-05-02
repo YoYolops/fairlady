@@ -103,7 +103,7 @@ pub async fn download_foreign_data(cid: &str) -> Result<Bytes> {
     Ok(raw_data)
 }
 
-pub async fn get_foreign_metadata() -> Result<Metadata> {
+pub async fn get_foreign_metadata() -> Result<Option<Metadata>> {
     let client = Client::new();
     let response = client
         .post(format!("{}/files/ls", KUBO_RPC_BASE_URL))
@@ -118,13 +118,20 @@ pub async fn get_foreign_metadata() -> Result<Metadata> {
         .json::<KuboMetadataResponse>()
         .await
         .context("Failed to parse Kubo JSON into Rust struct")?;
-
-    // 3. Pretty print the fully typed struct
     println!("{:#?}", parsed_metadata);
-    Ok(Metadata {
-        cid: (),
-        mtime_nsecs: (),
-        name: ()
-    })
+    // Search for the file where the name is the same as we are configured to generate
+    if let Some(metadatas) = parsed_metadata.entries {
+        for metadata in metadatas {
+            if metadata.name == KUBO_DEFAULT_MFS_DESTINATION_PATH {
+                return Ok(Some(Metadata {
+                    cid: metadata.cid,
+                    mtime_nsecs: metadata.mtime_nsecs,
+                    name: metadata.name
+                }))
+            }
+        }
+    };
+    Ok(None)
+    // Pretty print the fully typed struct
 }
 

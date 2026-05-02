@@ -18,7 +18,6 @@ pub struct KuboAddResponse {
     _size: Option<String>,
 }
 
-// 1. The Root Response
 #[derive(Deserialize, Debug)]
 pub struct KuboMetadataResponse {
     // Wrapped in Option because if an MFS directory is completely empty, 
@@ -37,5 +36,5 @@ pub struct KuboMetadataEntry {
     pub cid: String,
 
     #[serde(rename = "MtimeNsecs")]
-    pub mtime_nsecs: Option<u128>, 
+    pub mtime_nsecs: u128, 
 }
