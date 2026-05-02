@@ -20,7 +20,7 @@ pub struct KuboAddResponse {
 
 #[derive(Deserialize, Debug)]
 pub struct KuboMetadataResponse {
-    // Wrapped in Option because if an MFS directory is completely empty, 
+    // Wrapped in Option because if an MFS directory is completely empty,
     // Kubo might omit the "Entries" key entirely or return null.
     #[serde(rename = "Entries")]
     pub entries: Option<Vec<KuboMetadataEntry>>,
@@ -36,5 +36,5 @@ pub struct KuboMetadataEntry {
     pub cid: String,
 
     #[serde(rename = "MtimeNsecs")]
-    pub mtime_nsecs: u128, 
+    pub mtime_nsecs: u128,
 }

@@ -45,9 +45,12 @@ impl Database {
         match record {
             Some(db_record) => Ok(Some(HistoryRecord {
                 cid: db_record.cid,
-                timestamp: db_record.timestamp.parse().expect("Failed to parse timestamp data to u128"),
+                timestamp: db_record
+                    .timestamp
+                    .parse()
+                    .expect("Failed to parse timestamp data to u128"),
             })),
-            None => Ok(None)
+            None => Ok(None),
         }
     }
 

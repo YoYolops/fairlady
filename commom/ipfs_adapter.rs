@@ -1,5 +1,5 @@
 use crate::constants::{KUBO_DEFAULT_MFS_DESTINATION_PATH, KUBO_RPC_BASE_URL};
-use crate::kubo::{KuboAddResponse};
+use crate::kubo::KuboAddResponse;
 use anyhow::{Context, Result, bail};
 use bytes::Bytes;
 use reqwest::{self, Client, multipart};
@@ -23,9 +23,7 @@ pub async fn upload_data_kubo(data: Vec<u8>) -> Result<Metadata> {
 
     let kubo_response = http_client
         .post(format!("{}/{}", KUBO_RPC_BASE_URL, "add"))
-        .query(&[
-            ("pin", "false"),
-        ]) // Make file succetible to Kubo's GC unless linked to MFS
+        .query(&[("pin", "false")]) // Make file succetible to Kubo's GC unless linked to MFS
         .multipart(form)
         .send()
         .await?;
@@ -41,8 +39,8 @@ pub async fn upload_data_kubo(data: Vec<u8>) -> Result<Metadata> {
         timestamp_nsecs: current_time,
         name: match kubo_parsed_response_body.name {
             Some(name) => name,
-            None            => String::from("data.bin") 
-        }
+            None => String::from("data.bin"),
+        },
     })
 }
 

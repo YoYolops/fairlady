@@ -1,8 +1,16 @@
-use std::{sync::{Arc, atomic::{AtomicBool, Ordering}}, time::Duration};
-use commom::{constants::{KUBO_DEFAULT_MFS_DESTINATION_PATH, USERDATA_UPDATE_TIME_SECONDS, WATCHER_REACTION_TIME_SECONDS}, database::{self, Database}, ipfs_adapter::{self, Metadata}};
-use anyhow::{Result, Context, bail};
-use glifo::{credentials::{self, Credentials}, encrypter};
-use tokio::{sync::mpsc::Receiver, task::{self, JoinHandle}, time};
+use anyhow::{Context, Result, bail};
+use commom::{
+    constants::{
+        KUBO_DEFAULT_MFS_DESTINATION_PATH, USERDATA_UPDATE_TIME_SECONDS,
+        WATCHER_REACTION_TIME_SECONDS,
+    },
+    database::{self, Database},
+    ipfs_adapter::{self, Metadata},
+};
+use glifo::{
+    credentials::{self, Credentials},
+    encrypter,
+};
 use notify::{
     Event,
     // EventKind::{
@@ -14,8 +22,24 @@ use notify::{
     //     Remove
     // }
 };
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+    time::Duration,
+};
+use tokio::{
+    sync::mpsc::Receiver,
+    task::{self, JoinHandle},
+    time,
+};
 
-pub async fn fs_event_dispatcher(mut watcher_receiver: Receiver<Event>, credentials: Arc<Credentials>, database: Arc<Database>) -> Result<()> {
+pub async fn fs_event_dispatcher(
+    mut watcher_receiver: Receiver<Event>,
+    credentials: Arc<Credentials>,
+    database: Arc<Database>,
+) -> Result<()> {
     // Responsible for dispatching system routines according to observed watcher events
     // It throttles events to prevent reading, encrypting, tarballing and uploading excessively: one update at most every 10s
     let update_scheduled: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
@@ -28,19 +52,24 @@ pub async fn fs_event_dispatcher(mut watcher_receiver: Receiver<Event>, credenti
             task::spawn(async move {
                 match event.kind {
                     _ => {
-                        let _ = time::sleep(Duration::from_secs(WATCHER_REACTION_TIME_SECONDS)).await;
-                        let upload_result = encrypt_and_upload_system_data(&credentials_, &database_).await;
+                        let _ =
+                            time::sleep(Duration::from_secs(WATCHER_REACTION_TIME_SECONDS)).await;
+                        let upload_result =
+                            encrypt_and_upload_system_data(&credentials_, &database_).await;
                         match upload_result {
                             Ok(_) => println!("UPLOAD SUCCESSFULL"),
-                            Err(e) => println!("{}", e)
+                            Err(e) => println!("{}", e),
                         }
-                        let _ = time::sleep(Duration::from_secs(USERDATA_UPDATE_TIME_SECONDS)).await;
+                        let _ =
+                            time::sleep(Duration::from_secs(USERDATA_UPDATE_TIME_SECONDS)).await;
                     }
                 };
                 update_scheduled_clone.swap(false, Ordering::SeqCst);
             });
-        } else { println!("IGNORING EVENT: already scheduled") };
-    };
+        } else {
+            println!("IGNORING EVENT: already scheduled")
+        };
+    }
 
     Ok(())
 }
@@ -75,7 +104,9 @@ pub async fn encrypt_and_upload_system_data(
         ipfs_adapter::delete_previous_link(&format!("/{}", KUBO_DEFAULT_MFS_DESTINATION_PATH))
             .await?;
         ipfs_adapter::link_data_to_kubo_mfs(&upload_metadata.cid, &upload_metadata.name).await?;
-        database.add_to_history(&upload_metadata.cid, &upload_metadata.timestamp_nsecs).await?;
+        database
+            .add_to_history(&upload_metadata.cid, &upload_metadata.timestamp_nsecs)
+            .await?;
         println!("Done!");
     } else {
         eprintln!("Error encrypting data");

@@ -8,6 +8,5 @@ pub fn get_userdata_path() -> Result<PathBuf> {
 }
 
 pub fn get_latest_data_cid() -> Result<()> {
-    
     Ok(())
 }
