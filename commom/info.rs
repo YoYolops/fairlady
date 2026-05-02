@@ -6,3 +6,8 @@ pub fn get_userdata_path() -> Result<PathBuf> {
     let absolute_path_buf = path::absolute(DATA_FOLDER_PATH)?;
     Ok(absolute_path_buf)
 }
+
+pub fn get_latest_data_cid() -> Result<()> {
+    
+    Ok(())
+}

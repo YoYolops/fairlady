@@ -20,10 +20,10 @@ async fn init_db() -> Result<SqlitePool> {
         .await?;
     sqlx::query(
         r#"
-            CREATE TABLE IF NOT EXISTS history (
+            CREATE TABLE IF NOT EXISTS upload_history (
                 cid TEXT PRIMARY KEY,
                 -- Stores the exact seconds since the Unix Epoch:
-                timestamp INTEGER DEFAULT (CAST(strftime('%s', 'now') AS INTEGER))
+                timestamp TEXT NOT NULL
             );
             "#,
     )

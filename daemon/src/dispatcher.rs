@@ -15,6 +15,8 @@ use notify::{
 };
 
 async fn event_dispatcher(mut watcher_receiver: Receiver<Event>) -> Result<()> {
+    // Responsible for dispatching system routines according to observed watcher events
+    // It throttles events to prevent reading, encrypting, tarballing and uploading excessively: one update at most every 10s
     let update_scheduled: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
     while let Some(event) = watcher_receiver.recv().await {
         let was_already_scheduled = update_scheduled.swap(true, Ordering::SeqCst);

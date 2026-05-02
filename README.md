@@ -11,8 +11,10 @@ An IPFS plugin that allows safe data storage over the network, by providing tool
 1. ✅ DONE: Create a function to check if credentials are already created inside ./data;
 2. ✅ DONE: Create a function to store created credentials inside ./data
 3. 🟡 Build strategy to dinamically get the latest data
-4. 🟡 Create folder watcher
+4. ✅ Create folder watcher
 
+🟡 pending
+✅ done
 
 ### To be known:
 Keys are stored with compactly, which approaches data encoding/decoding in such a way that will always

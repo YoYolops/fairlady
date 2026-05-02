@@ -1,17 +1,32 @@
 use crate::constants::{KUBO_DEFAULT_MFS_DESTINATION_PATH, KUBO_RPC_BASE_URL};
-use crate::kubo::KuboAddResponse;
+use crate::kubo::{KuboAddResponse, KuboMetadataResponse};
 use anyhow::{Context, Result, bail};
 use bytes::Bytes;
 use reqwest::{self, Client, multipart};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-pub async fn upload_data_kubo(data: Vec<u8>) -> Result<KuboAddResponse> {
+#[derive(Debug)]
+pub struct Metadata {
+    pub cid: String,
+    pub mtime_nsecs: u128,
+    pub name: String,
+}
+
+pub async fn upload_data_kubo(data: Vec<u8>) -> Result<Metadata> {
     let http_client = reqwest::Client::new();
     let part = multipart::Part::bytes(data).file_name(KUBO_DEFAULT_MFS_DESTINATION_PATH);
     let form = multipart::Form::new().part("file", part);
+    let current_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards while uploading data")
+        .as_nanos();
 
     let kubo_response = http_client
         .post(format!("{}/{}", KUBO_RPC_BASE_URL, "add"))
-        .query(&[("pin", "false")]) // Make file succetible to Kubo's GC unless linked to MFS
+        .query(&[
+            ("pin", "false"),
+            ("mtime", &current_time.to_string())
+        ]) // Make file succetible to Kubo's GC unless linked to MFS
         .multipart(form)
         .send()
         .await?;
@@ -22,7 +37,17 @@ pub async fn upload_data_kubo(data: Vec<u8>) -> Result<KuboAddResponse> {
     }
     let kubo_parsed_response_body: KuboAddResponse =
         serde_json::from_str::<KuboAddResponse>(&response_text)?;
-    Ok(kubo_parsed_response_body)
+    Ok(Metadata {
+        cid: kubo_parsed_response_body.cid,
+        mtime_nsecs: match kubo_parsed_response_body.mtime_nsecs {
+            Some(time) => time,
+            None            => current_time
+        },
+        name: match kubo_parsed_response_body.name {
+            Some(name) => name,
+            None            => String::from("data.bin") 
+        }
+    })
 }
 
 pub async fn link_data_to_kubo_mfs(cid: &str, filename: &str) -> Result<()> {
@@ -77,3 +102,29 @@ pub async fn download_foreign_data(cid: &str) -> Result<Bytes> {
     let raw_data = response.bytes().await?;
     Ok(raw_data)
 }
+
+pub async fn get_foreign_metadata() -> Result<Metadata> {
+    let client = Client::new();
+    let response = client
+        .post(format!("{}/files/ls", KUBO_RPC_BASE_URL))
+        .query(&[
+            ("arg", "/"),
+            ("long", "true") // Forces Kubo to return extended metadata
+        ])
+        .send()
+        .await
+        .context("failed to list MFS files")?;
+    let parsed_metadata = response
+        .json::<KuboMetadataResponse>()
+        .await
+        .context("Failed to parse Kubo JSON into Rust struct")?;
+
+    // 3. Pretty print the fully typed struct
+    println!("{:#?}", parsed_metadata);
+    Ok(Metadata {
+        cid: (),
+        mtime_nsecs: (),
+        name: ()
+    })
+}
+
