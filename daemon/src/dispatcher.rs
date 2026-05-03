@@ -6,13 +6,10 @@ use commom::{
         KUBO_DEFAULT_MFS_DESTINATION_PATH, USERDATA_UPDATE_TIME_SECONDS,
         WATCHER_REACTION_TIME_SECONDS,
     },
-    database::{Database},
+    database::Database,
     ipfs_adapter::{self, Metadata},
 };
-use glifo::{
-    credentials::{Credentials},
-    encrypter,
-};
+use glifo::{credentials::Credentials, encrypter};
 use notify::{
     Event,
     // EventKind::{
@@ -31,11 +28,7 @@ use std::{
     },
     time::Duration,
 };
-use tokio::{
-    sync::mpsc::Receiver,
-    task,
-    time,
-};
+use tokio::{sync::mpsc::Receiver, task, time};
 
 pub async fn fs_event_dispatcher(
     mut watcher_receiver: Receiver<Event>,

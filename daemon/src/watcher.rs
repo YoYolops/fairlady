@@ -2,7 +2,7 @@ use anyhow::{Context, Result, bail};
 use commom::constants::DATA_FOLDER_PATH;
 use notify::{Event, RecursiveMode, Watcher};
 use std::path::Path;
-use tokio::{sync::mpsc::Sender};
+use tokio::sync::mpsc::Sender;
 
 type FsEventSender = Sender<Event>;
 
