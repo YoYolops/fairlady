@@ -1,14 +1,16 @@
+// This module is dedicated to fowarding fs events listened by the watcher (Maybe they should be merged?)
+
 use anyhow::{Context, Result, bail};
 use commom::{
     constants::{
         KUBO_DEFAULT_MFS_DESTINATION_PATH, USERDATA_UPDATE_TIME_SECONDS,
         WATCHER_REACTION_TIME_SECONDS,
     },
-    database::{self, Database},
+    database::{Database},
     ipfs_adapter::{self, Metadata},
 };
 use glifo::{
-    credentials::{self, Credentials},
+    credentials::{Credentials},
     encrypter,
 };
 use notify::{
@@ -31,7 +33,7 @@ use std::{
 };
 use tokio::{
     sync::mpsc::Receiver,
-    task::{self, JoinHandle},
+    task,
     time,
 };
 

@@ -10,13 +10,13 @@ An IPFS plugin that allows safe data storage over the network, by providing tool
 (Currently, at every run, new aes key is created)
 1. ✅ DONE: Create a function to check if credentials are already created inside ./data;
 2. ✅ DONE: Create a function to store created credentials inside ./data
-3. 🟡 Build strategy to dinamically get the latest data
+3. 🟣 FROZEN DUE TO IRRELEVANCE FOR NOW: Build strategy to dinamically get the latest data
 4. ✅ Create folder watcher
 5. 🟡 build CLI
 
 🟡 pending
 ✅ done
-
+🟣 frozen
 
 
 ### To be known:
