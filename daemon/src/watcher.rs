@@ -1,5 +1,5 @@
 use anyhow::{Context, Result, bail};
-use commom::constants::DATA_FOLDER_PATH;
+use commom::constants::USER_DATA_FOLDER_PATH;
 use notify::{Event, RecursiveMode, Watcher};
 use std::path::Path;
 use tokio::sync::mpsc::Sender;
@@ -14,7 +14,7 @@ pub async fn bridge_sync_watcher(tx_async: FsEventSender) -> Result<()> {
             notify::recommended_watcher(tx_sync).context("Failed to spawn notify watcher")?;
 
         watcher
-            .watch(Path::new(DATA_FOLDER_PATH), RecursiveMode::Recursive)
+            .watch(Path::new(USER_DATA_FOLDER_PATH), RecursiveMode::Recursive)
             .context("Failed to watch observed folder")?;
 
         while let Ok(event) = rx_sync.recv() {

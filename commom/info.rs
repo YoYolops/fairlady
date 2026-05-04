@@ -1,9 +1,9 @@
-use crate::constants::DATA_FOLDER_PATH;
+use crate::constants::USER_DATA_FOLDER_PATH;
 use anyhow::Result;
 use std::path::{self, PathBuf};
 
 pub fn get_userdata_path() -> Result<PathBuf> {
-    let absolute_path_buf = path::absolute(DATA_FOLDER_PATH)?;
+    let absolute_path_buf = path::absolute(USER_DATA_FOLDER_PATH)?;
     Ok(absolute_path_buf)
 }
 

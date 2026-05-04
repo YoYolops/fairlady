@@ -1,5 +1,5 @@
 // Fair lady fs interaction paths
-pub const DATA_FOLDER_PATH: &str = "./data"; // Relative to where the binary is ran
+pub const USER_DATA_FOLDER_PATH: &str = "./data"; // Relative to where the binary is ran
 pub const SYSTEM_DATA_FOLDER_PATH: &str = "./.fairlady";
 pub const SYSTEM_FOREIGN_DATA_PATH: &str = "./.fairlady/foreign";
 pub const SYSTEM_DATABASE_PATH: &str = "./.fairlady/fairlady.db";

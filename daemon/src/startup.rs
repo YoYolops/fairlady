@@ -1,11 +1,12 @@
 use anyhow::Result;
-use commom::constants::{SYSTEM_DATABASE_PATH, SYSTEM_FOREIGN_DATA_PATH};
+use commom::constants::{SYSTEM_DATABASE_PATH, SYSTEM_FOREIGN_DATA_PATH, USER_DATA_FOLDER_PATH};
 use sqlx::SqlitePool;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use tokio::fs;
 
 pub async fn system_startup() -> Result<SqlitePool> {
-    fs::create_dir_all(SYSTEM_FOREIGN_DATA_PATH).await?; // ensures folders existence
+    fs::create_dir_all(SYSTEM_FOREIGN_DATA_PATH).await?; // ensures system folders existence
+    fs::create_dir_all(USER_DATA_FOLDER_PATH).await?; // Ensures userdata default folder existence
     let built_pool = init_db().await?;
     Ok(built_pool)
 }
