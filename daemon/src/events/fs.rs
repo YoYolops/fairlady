@@ -1,12 +1,14 @@
 use anyhow::{Context, Result, bail};
 use commom::constants::USER_DATA_FOLDER_PATH;
-use notify::{Event, RecursiveMode, Watcher};
+use notify::{RecursiveMode, Watcher};
 use std::path::Path;
 use tokio::sync::mpsc::Sender;
 
-type FsEventSender = Sender<Event>;
+use crate::FairladyEvent;
 
-pub async fn bridge_sync_watcher(tx_async: FsEventSender) -> Result<()> {
+type FsEventSender = Sender<FairladyEvent>;
+
+pub async fn bridge_sync_fs_watcher(tx_async: FsEventSender) -> Result<()> {
     // Bridges sync channel to tokio's
     let (tx_sync, rx_sync) = std::sync::mpsc::channel();
     let blocking_folder_watcher_handle = tokio::task::spawn_blocking(move || -> Result<()> {
@@ -22,7 +24,10 @@ pub async fn bridge_sync_watcher(tx_async: FsEventSender) -> Result<()> {
                 // Could recover data from channel?:
                 Ok(event_data) => {
                     // If yes, send ia via async channel
-                    if tx_async.blocking_send(event_data).is_err() {
+                    if tx_async
+                        .blocking_send(FairladyEvent::FS(event_data))
+                        .is_err()
+                    {
                         bail!("Folder watcher failed to send event to tokio runtime")
                     }
                 }

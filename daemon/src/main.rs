@@ -1,19 +1,21 @@
 // Create a glifo implementation for at least two cryptographic algorithms
-mod cli;
-mod dispatcher;
+mod events;
 mod startup;
-mod watcher;
-
-use std::sync::Arc;
 
 use anyhow::Result;
 use commom::database::Database;
 use glifo::credentials;
 use startup::system_startup;
+use std::sync::Arc;
 use tokio::{self, sync::mpsc, task::JoinSet};
 
-struct WorkerID {
+pub struct WorkerID {
     pub name: String,
+}
+
+pub enum FairladyEvent {
+    CLI(String),
+    FS(notify::Event),
 }
 
 #[tokio::main]
@@ -31,15 +33,17 @@ async fn main() -> Result<()> {
     let dispatcher_database = arc_database.clone();
 
     // Create channels for daemon's workers communications
-    let (watcher_transmitter, watcher_receiver) = mpsc::channel(32);
+    let (event_transmitter, event_receiver) = mpsc::channel(32);
 
     // tasks configuration setup and workers thread spawning
     let mut task_set: JoinSet<Result<WorkerID>> = JoinSet::new();
+    let fs_watcher_transmitter_channel = event_transmitter.clone();
     task_set.spawn(async move {
         // Task for monitoring userdata folder events
         let mut max_retry: u8 = 3;
         while max_retry > 0
-            && let Err(e) = watcher::bridge_sync_watcher(watcher_transmitter.clone()).await
+            && let Err(e) =
+                events::fs::bridge_sync_fs_watcher(fs_watcher_transmitter_channel.clone()).await
         {
             max_retry -= 1;
             println!("{}", format!("{:?}", e));
@@ -52,23 +56,26 @@ async fn main() -> Result<()> {
             name: String::from("FS_Watcher"),
         })
     });
+
+    let cli_transmitter_channel = event_transmitter.clone();
     task_set.spawn(async move {
-        // Dispatcher procedures according to fs watcher events
-        let _ = dispatcher::fs_event_dispatcher(
-            watcher_receiver,
+        // Task for listening to user input via terminal
+        events::cli::watch_cli_events(cli_transmitter_channel).await?;
+        Ok(WorkerID {
+            name: String::from("CLI_Watcher"),
+        })
+    });
+
+    task_set.spawn(async move {
+        // Dispatches procedures according to fs watcher events
+        let _ = events::dispatcher::event_dispatcher(
+            event_receiver,
             dispatcher_credentials,
             dispatcher_database.clone(),
         )
         .await?;
         Ok(WorkerID {
             name: String::from("FS_Dispatcher"),
-        })
-    });
-    task_set.spawn(async move {
-        // Task for listening to user input via terminal
-        cli::dispatch_cli_event(arc_credentials.clone(), arc_database.clone()).await?;
-        Ok(WorkerID {
-            name: String::from("CLI_Watcher"),
         })
     });
 
