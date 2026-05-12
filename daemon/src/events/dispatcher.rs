@@ -48,7 +48,7 @@ pub async fn event_dispatcher(
                 spawn_cli_event_handler(user_input, credentials_clone, database_clone).await;
             }
             FS(event) => {
-                let was_already_scheduled = scheduled_update.swap(true, Ordering::SeqCst);
+                let was_already_scheduled = scheduled_update.swap(true, Ordering::Acquire);
                 if !was_already_scheduled {
                     let scheduled_update_clone = scheduled_update.clone();
                     spawn_fs_event_handler(
@@ -88,7 +88,7 @@ async fn spawn_fs_event_handler(
                 println!("---------- SCHEDULED FINISHED ----------");
             }
         };
-        scheduled_update.swap(false, Ordering::SeqCst);
+        scheduled_update.swap(false, Ordering::Release);
     });
 }
 
