@@ -8,7 +8,7 @@ An IPFS plugin that allows safe data storage over the network, by providing tool
 The goal is exploring IPFS capabilities and limitations via its open source tooling, while 
 adressing privacy concerns when using the network as a global CDN.
 
-Fairlady allows one to use the Inter-Planetary File System to safely store its data. Once stored,
+Fairlady allows one to use the Inter-Planetary File System to safely store data. Once stored,
 with the IPFS node correctly set, online, and with `.fairlady` credentials in hand, user can access 
 it from anywhere in the world. No need to enroll in any third party paid services: you store it, 
 you own it.
@@ -19,6 +19,9 @@ you own it.
 3. 🟣 FROZEN DUE TO IRRELEVANCE FOR NOW: Build strategy to dinamically get the latest data
 4. ✅ Create folder watcher
 5. ✅ build CLI
+6. 🟡 Extend glifo with chacha20-poly1305
+7. 🟡 Extend glifo with two-fish
+8. 🟡 Extend glifo with serpent
 
 🟡 pending
 ✅ done
