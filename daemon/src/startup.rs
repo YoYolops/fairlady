@@ -1,19 +1,20 @@
 use anyhow::Result;
-use commom::constants::{SYSTEM_DATABASE_PATH, SYSTEM_FOREIGN_DATA_PATH, USER_DATA_FOLDER_PATH, ENCRYPTION_ALGORITHM};
+use commom::constants::{
+    ENCRYPTION_ALGORITHM, SYSTEM_DATABASE_PATH, SYSTEM_FOREIGN_DATA_PATH, USER_DATA_FOLDER_PATH,
+};
 use commom::database::Database;
 use glifo::credentials::{self, Credentials};
 use glifo::encrypter::CryptoAlgorithm;
-use sqlx::{SqlitePool};
+use sqlx::SqlitePool;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
-use tokio::fs;
 use std::sync::Arc;
-
+use tokio::fs;
 
 #[derive(Clone)]
 pub struct System {
     pub database: Arc<Database>,
     pub credentials: Arc<Credentials>,
-    pub encryption_system: Arc<CryptoAlgorithm>
+    pub encryption_system: Arc<CryptoAlgorithm>,
 }
 
 pub async fn system_startup() -> Result<System> {
@@ -27,7 +28,7 @@ pub async fn system_startup() -> Result<System> {
         "chacha" => CryptoAlgorithm::ChaCha20,
         "twofish" => CryptoAlgorithm::Twofish,
         "serpent" => CryptoAlgorithm::Serpent,
-        _ => panic!("FATAL: unrecognizable encryption algorithm")
+        _ => panic!("FATAL: unrecognizable encryption algorithm"),
     };
     Ok(System {
         database: Arc::new(database),

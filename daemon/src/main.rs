@@ -63,7 +63,7 @@ async fn main() -> Result<()> {
             event_receiver,
             dispatcher_credentials,
             dispatcher_database,
-            system.encryption_system
+            system.encryption_system,
         )
         .await?;
         Ok(WorkerID {

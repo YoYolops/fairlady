@@ -1,5 +1,6 @@
 // This module is dedicated to fowarding events listened by the any watcher workers
 
+use crate::FairladyEvent::{self, CLI, FS};
 use anyhow::{Context, Result};
 use commom::{
     constants::{
@@ -9,7 +10,10 @@ use commom::{
     database::Database,
     ipfs_adapter::{self, Metadata},
 };
-use glifo::{credentials::Credentials, encrypter::{self, CryptoAlgorithm}};
+use glifo::{
+    credentials::Credentials,
+    encrypter::{self, CryptoAlgorithm},
+};
 use notify::{
     Event,
     // EventKind::{
@@ -29,13 +33,12 @@ use std::{
     time::Duration,
 };
 use tokio::{sync::mpsc::Receiver, task, time};
-use crate::FairladyEvent::{self, CLI, FS};
 
 pub async fn event_dispatcher(
     mut event_receiver: Receiver<FairladyEvent>,
     credentials: Arc<Credentials>,
     database: Arc<Database>,
-    crypto_strategy: Arc<CryptoAlgorithm>
+    crypto_strategy: Arc<CryptoAlgorithm>,
 ) -> Result<()> {
     // Responsible for dispatching system routines according to observed system events
     // It throttles fs events to prevent reading, encrypting, tarballing and uploading excessively.
@@ -46,7 +49,13 @@ pub async fn event_dispatcher(
         let crypto_strategy_clone = crypto_strategy.clone();
         match event {
             CLI(user_input) => {
-                spawn_cli_event_handler(user_input, credentials_clone, database_clone, crypto_strategy_clone).await;
+                spawn_cli_event_handler(
+                    user_input,
+                    credentials_clone,
+                    database_clone,
+                    crypto_strategy_clone,
+                )
+                .await;
             }
             FS(event) => {
                 let was_already_scheduled = scheduled_update.swap(true, Ordering::Acquire);
@@ -57,7 +66,7 @@ pub async fn event_dispatcher(
                         scheduled_update_clone,
                         credentials_clone,
                         database_clone,
-                        crypto_strategy_clone
+                        crypto_strategy_clone,
                     )
                     .await;
                 } else {
@@ -74,7 +83,7 @@ async fn spawn_fs_event_handler(
     scheduled_update: Arc<AtomicBool>,
     credentials: Arc<Credentials>,
     database: Arc<Database>,
-    crypto_strategy: Arc<CryptoAlgorithm>
+    crypto_strategy: Arc<CryptoAlgorithm>,
 ) {
     task::spawn(async move {
         match event.kind {
@@ -82,7 +91,8 @@ async fn spawn_fs_event_handler(
                 println!("---------- SCHEDULED STARTED ----------");
                 let _ = time::sleep(Duration::from_secs(WATCHER_REACTION_TIME_SECONDS)).await;
                 println!("SCHEDULED IS RUNNING");
-                let _ = encrypt_and_upload_system_data(&credentials, &database, &crypto_strategy).await;
+                let _ =
+                    encrypt_and_upload_system_data(&credentials, &database, &crypto_strategy).await;
                 println!("SCHEDULED WAIT UPDATE TIME");
                 // This is essential. When fairlady stores data, it fires an FS event that is
                 // detected by the system, making it resend data to kubo, which fires another event
@@ -99,12 +109,13 @@ async fn spawn_cli_event_handler(
     user_input: String,
     credentials: Arc<Credentials>,
     database: Arc<Database>,
-    crypto_strategy: Arc<CryptoAlgorithm>
+    crypto_strategy: Arc<CryptoAlgorithm>,
 ) {
     tokio::spawn(async move {
         match user_input.as_ref() {
             "d" => {
-                let _ = decrypt_and_save_foreign_data(&credentials, &database, &crypto_strategy).await;
+                let _ =
+                    decrypt_and_save_foreign_data(&credentials, &database, &crypto_strategy).await;
             }
             _ => println!("Unknown cli command"),
         };
@@ -114,7 +125,7 @@ async fn spawn_cli_event_handler(
 pub async fn decrypt_and_save_foreign_data(
     credentials: &Credentials,
     database: &Database,
-    crypto_strategy: &CryptoAlgorithm
+    crypto_strategy: &CryptoAlgorithm,
 ) -> Result<()> {
     if let Some(record) = database.get_last_history_record().await? {
         let data = ipfs_adapter::download_foreign_data(&record.cid)
@@ -135,7 +146,7 @@ pub async fn decrypt_and_save_foreign_data(
 pub async fn encrypt_and_upload_system_data(
     system_credentials: &Credentials,
     database: &Database,
-    crypto_algo: &CryptoAlgorithm
+    crypto_algo: &CryptoAlgorithm,
 ) -> Result<()> {
     if let Ok(data) = encrypter::encrypt_user_data(system_credentials, crypto_algo).await {
         let upload_metadata: Metadata = ipfs_adapter::upload_data_kubo(data).await?;

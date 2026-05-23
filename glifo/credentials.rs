@@ -49,25 +49,33 @@ pub async fn handle_credentials() -> Result<Credentials> {
 
 pub fn generate_aes_key() -> [u8; AES_KEY_SIZE] {
     let mut key = [0u8; AES_KEY_SIZE];
-    OsRng.try_fill_bytes(&mut key).expect("Failed while generating crypto key");
+    OsRng
+        .try_fill_bytes(&mut key)
+        .expect("Failed while generating crypto key");
     key
 }
 
 fn generate_chacha_key() -> [u8; CHACHA_KEY_SIZE] {
     let mut key = [0u8; CHACHA_KEY_SIZE];
-    OsRng.try_fill_bytes(&mut key).expect("Failed while generating crypto key");
+    OsRng
+        .try_fill_bytes(&mut key)
+        .expect("Failed while generating crypto key");
     key
 }
 
 fn generate_twofish_key() -> [u8; TWOFISH_KEY_SIZE] {
     let mut key = [0u8; TWOFISH_KEY_SIZE];
-    OsRng.try_fill_bytes(&mut key).expect("Failed while generating crypto key");
+    OsRng
+        .try_fill_bytes(&mut key)
+        .expect("Failed while generating crypto key");
     key
 }
 
 fn generate_serpent_key() -> [u8; SERPENT_KEY_SIZE] {
-    let mut key = [0u8; SERPENT_KEY_SIZE]; 
-    OsRng.try_fill_bytes(&mut key).expect("Failed while generating crypto key");
+    let mut key = [0u8; SERPENT_KEY_SIZE];
+    OsRng
+        .try_fill_bytes(&mut key)
+        .expect("Failed while generating crypto key");
     key
 }
 
@@ -77,14 +85,18 @@ pub async fn search_existent_keys() -> Result<Option<Credentials>> {
 
     // Verify folder existence
     if let Ok(metadata) = fs::metadata(&folder).await {
-        if !metadata.is_dir() { return Ok(None); }
+        if !metadata.is_dir() {
+            return Ok(None);
+        }
     } else {
         return Ok(None);
     }
 
     // Verify file existence
     if let Ok(metadata) = fs::metadata(&file).await {
-        if !metadata.is_file() { return Ok(None); }
+        if !metadata.is_file() {
+            return Ok(None);
+        }
     } else {
         return Ok(None);
     }
