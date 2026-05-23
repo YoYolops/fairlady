@@ -43,10 +43,15 @@ pub async fn event_dispatcher(
     // Responsible for dispatching system routines according to observed system events
     // It throttles fs events to prevent reading, encrypting, tarballing and uploading excessively.
     let scheduled_update: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+    let mut event_counter: u128 = 0;
     while let Some(event) = event_receiver.recv().await {
         let credentials_clone = credentials.clone();
         let database_clone = database.clone();
         let crypto_strategy_clone = crypto_strategy.clone();
+
+        // event_counter+=1;
+        // print!("E-{}    ", event_counter);
+
         match event {
             CLI(user_input) => {
                 spawn_cli_event_handler(
@@ -61,6 +66,7 @@ pub async fn event_dispatcher(
                 let was_already_scheduled = scheduled_update.swap(true, Ordering::Acquire);
                 if !was_already_scheduled {
                     let scheduled_update_clone = scheduled_update.clone();
+                    println!("SPAWNING FS EVENT HANDLER:");
                     spawn_fs_event_handler(
                         event,
                         scheduled_update_clone,
@@ -69,9 +75,7 @@ pub async fn event_dispatcher(
                         crypto_strategy_clone,
                     )
                     .await;
-                } else {
-                    println!("IGNORING EVENT: already scheduled")
-                };
+                }
             }
         };
     }
@@ -128,13 +132,13 @@ pub async fn decrypt_and_save_foreign_data(
     crypto_strategy: &CryptoAlgorithm,
 ) -> Result<()> {
     if let Some(record) = database.get_last_history_record().await? {
-        let data = ipfs_adapter::download_foreign_data(&record.cid)
+        let mut data = ipfs_adapter::download_foreign_data(&record.cid)
             .await
             .context("ERROR while downloading foreign data")?;
-        let decrypted_data = encrypter::decrypt_foreign_data(credentials, &data, crypto_strategy)
+        data = encrypter::decrypt_foreign_data(credentials, data, crypto_strategy)
             .await
             .context("ERROR while decrypting foreign data")?;
-        let storage_result = encrypter::store_foreign_data(decrypted_data)
+        let storage_result = encrypter::store_foreign_data(data)
             .await
             .context("ERROR while storing foreign data")?;
         return Ok(storage_result);

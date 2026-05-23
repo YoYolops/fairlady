@@ -1,7 +1,6 @@
 use crate::constants::{KUBO_DEFAULT_MFS_DESTINATION_PATH, KUBO_RPC_BASE_URL};
 use crate::kubo::KuboAddResponse;
 use anyhow::{Context, Result, bail};
-use bytes::Bytes;
 use reqwest::{self, Client, multipart};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -77,11 +76,11 @@ pub async fn delete_previous_link(mfs_path: &str) -> Result<()> {
     Ok(())
 }
 
-pub async fn download_foreign_data(cid: &str) -> Result<Bytes> {
+pub async fn download_foreign_data(cid: &str) -> Result<Vec<u8>> {
     let client = Client::new();
     let url = format!("{}/cat", KUBO_RPC_BASE_URL);
 
-    let response = client
+    let mut response = client
         .post(url)
         .query(&[("arg", cid)])
         .send()
@@ -93,6 +92,15 @@ pub async fn download_foreign_data(cid: &str) -> Result<Bytes> {
         bail!("FAILED to fetch CID {}. Kubo error: {}", cid, error_message);
     }
 
-    let raw_data = response.bytes().await?;
+    let mut raw_data = if let Some(len) = response.content_length() {
+        Vec::with_capacity(len as usize)
+    } else {
+        Vec::new()
+    };
+
+    while let Some(chunk) = response.chunk().await? {
+        raw_data.extend_from_slice(&chunk);
+    }
+
     Ok(raw_data)
 }

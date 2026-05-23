@@ -34,15 +34,13 @@ pub async fn handle_credentials() -> Result<Credentials> {
         return Ok(credentials);
     };
 
-    // Otherwise, generate a fresh batch of keys for all 4 ciphers
+    // Otherwise, generate a fresh keys for all 4 ciphers
     let credentials = Credentials {
         aes: Zeroizing::new(generate_aes_key()),
         chacha: Zeroizing::new(generate_chacha_key()),
         serpent: Zeroizing::new(generate_serpent_key()),
         twofish: Zeroizing::new(generate_twofish_key()),
     };
-
-    // Save the completely new set of keys to the file system
     save_credentials_to_fs(&credentials).await?;
     Ok(credentials)
 }
