@@ -1,17 +1,13 @@
-use aes_gcm::{
-    Aes256Gcm, Key,
-    aead::{KeyInit, OsRng, rand_core::RngCore},
-};
-use chacha20poly1305::ChaCha20Poly1305;
 use anyhow::Result;
 use commom::constants::SYSTEM_DATA_FOLDER_PATH;
 use pkcs8::der::zeroize::Zeroizing;
+use rand_core::{OsRng, TryRngCore};
 use std::path::Path;
 use tokio::{fs, task};
 
 const AES_KEY_SIZE: usize = 32;
 const CHACHA_KEY_SIZE: usize = 32;
-const SERPENT_KEY_SIZE: usize = 32;
+const SERPENT_KEY_SIZE: usize = 16;
 const TWOFISH_KEY_SIZE: usize = 32;
 const KEYS_FILENAME: &str = "keys";
 
@@ -40,7 +36,7 @@ pub async fn handle_credentials() -> Result<Credentials> {
 
     // Otherwise, generate a fresh batch of keys for all 4 ciphers
     let credentials = Credentials {
-        aes: Zeroizing::new(generate_aes_gcm_key()),
+        aes: Zeroizing::new(generate_aes_key()),
         chacha: Zeroizing::new(generate_chacha_key()),
         serpent: Zeroizing::new(generate_serpent_key()),
         twofish: Zeroizing::new(generate_twofish_key()),
@@ -51,25 +47,27 @@ pub async fn handle_credentials() -> Result<Credentials> {
     Ok(credentials)
 }
 
-pub fn generate_aes_gcm_key() -> [u8; AES_KEY_SIZE] {
-    let key: Key<Aes256Gcm> = Aes256Gcm::generate_key(OsRng);
-    key.into()
+pub fn generate_aes_key() -> [u8; AES_KEY_SIZE] {
+    let mut key = [0u8; AES_KEY_SIZE];
+    OsRng.try_fill_bytes(&mut key).expect("Failed while generating crypto key");
+    key
 }
 
 fn generate_chacha_key() -> [u8; CHACHA_KEY_SIZE] {
-    let key = ChaCha20Poly1305::generate_key(&mut OsRng);
-    key.into()
+    let mut key = [0u8; CHACHA_KEY_SIZE];
+    OsRng.try_fill_bytes(&mut key).expect("Failed while generating crypto key");
+    key
 }
 
 fn generate_twofish_key() -> [u8; TWOFISH_KEY_SIZE] {
     let mut key = [0u8; TWOFISH_KEY_SIZE];
-    OsRng.fill_bytes(&mut key);
+    OsRng.try_fill_bytes(&mut key).expect("Failed while generating crypto key");
     key
 }
 
 fn generate_serpent_key() -> [u8; SERPENT_KEY_SIZE] {
     let mut key = [0u8; SERPENT_KEY_SIZE]; 
-    OsRng.fill_bytes(&mut key);
+    OsRng.try_fill_bytes(&mut key).expect("Failed while generating crypto key");
     key
 }
 

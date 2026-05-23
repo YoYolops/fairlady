@@ -12,11 +12,12 @@ anyhow = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 pkcs8 = { workspace = true }
-aes-gcm = { workspace = true }
+aes = { workspace = true }
 tar = { workspace = true }
 compactly = { workspace = true }
 bytes = { workspace = true }
-chacha20poly1305 = { workspace = true }
+chacha20 = { workspace = true }
 ctr = { workspace = true }
 twofish = { workspace = true }
 serpent = { workspace = true }
+rand_core = { workspace = true }

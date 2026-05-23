@@ -1,6 +1,6 @@
 // This module is dedicated to fowarding events listened by the any watcher workers
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use commom::{
     constants::{
         KUBO_DEFAULT_MFS_DESTINATION_PATH, USERDATA_UPDATE_TIME_SECONDS,
@@ -29,7 +29,6 @@ use std::{
     time::Duration,
 };
 use tokio::{sync::mpsc::Receiver, task, time};
-
 use crate::FairladyEvent::{self, CLI, FS};
 
 pub async fn event_dispatcher(
@@ -44,9 +43,10 @@ pub async fn event_dispatcher(
     while let Some(event) = event_receiver.recv().await {
         let credentials_clone = credentials.clone();
         let database_clone = database.clone();
+        let crypto_strategy_clone = crypto_strategy.clone();
         match event {
             CLI(user_input) => {
-                spawn_cli_event_handler(user_input, credentials_clone, database_clone).await;
+                spawn_cli_event_handler(user_input, credentials_clone, database_clone, crypto_strategy_clone).await;
             }
             FS(event) => {
                 let was_already_scheduled = scheduled_update.swap(true, Ordering::Acquire);
@@ -57,7 +57,7 @@ pub async fn event_dispatcher(
                         scheduled_update_clone,
                         credentials_clone,
                         database_clone,
-                        crypto_strategy
+                        crypto_strategy_clone
                     )
                     .await;
                 } else {
@@ -99,11 +99,12 @@ async fn spawn_cli_event_handler(
     user_input: String,
     credentials: Arc<Credentials>,
     database: Arc<Database>,
+    crypto_strategy: Arc<CryptoAlgorithm>
 ) {
     tokio::spawn(async move {
         match user_input.as_ref() {
             "d" => {
-                let _ = decrypt_and_save_foreign_data(&credentials, &database).await;
+                let _ = decrypt_and_save_foreign_data(&credentials, &database, &crypto_strategy).await;
             }
             _ => println!("Unknown cli command"),
         };
@@ -113,12 +114,13 @@ async fn spawn_cli_event_handler(
 pub async fn decrypt_and_save_foreign_data(
     credentials: &Credentials,
     database: &Database,
+    crypto_strategy: &CryptoAlgorithm
 ) -> Result<()> {
     if let Some(record) = database.get_last_history_record().await? {
         let data = ipfs_adapter::download_foreign_data(&record.cid)
             .await
             .context("ERROR while downloading foreign data")?;
-        let decrypted_data = encrypter::decrypt_foreign_data(credentials, &data)
+        let decrypted_data = encrypter::decrypt_foreign_data(credentials, &data, crypto_strategy)
             .await
             .context("ERROR while decrypting foreign data")?;
         let storage_result = encrypter::store_foreign_data(decrypted_data)
@@ -126,7 +128,7 @@ pub async fn decrypt_and_save_foreign_data(
             .context("ERROR while storing foreign data")?;
         return Ok(storage_result);
     }
-    println!("No data memory").
+    println!("No data memory");
     Ok(())
 }
 

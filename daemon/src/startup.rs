@@ -6,6 +6,7 @@ use glifo::encrypter::CryptoAlgorithm;
 use sqlx::{SqlitePool};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use tokio::fs;
+use std::sync::Arc;
 
 
 #[derive(Clone)]
@@ -21,15 +22,17 @@ pub async fn system_startup() -> Result<System> {
     let pool = init_db().await?;
     let credentials = credentials::handle_credentials().await?;
     let database = Database::build(Some(pool)).await?;
+    let encryption_system = match ENCRYPTION_ALGORITHM {
+        "aes" => CryptoAlgorithm::AES,
+        "chacha" => CryptoAlgorithm::ChaCha20,
+        "twofish" => CryptoAlgorithm::Twofish,
+        "serpent" => CryptoAlgorithm::Serpent,
+        _ => panic!("FATAL: unrecognizable encryption algorithm")
+    };
     Ok(System {
-        database,
-        credentials,
-        encryption_system: match ENCRYPTION_ALGORITHM {
-            "aes" => CryptoAlgorithm::AES,
-            "chacha" => CryptoAlgorithm::ChaCha20,
-            "twofish" => CryptoAlgorithm::Twofish,
-            "serpent" => CryptoAlgorithm::Serpent
-        }
+        database: Arc::new(database),
+        credentials: Arc::new(credentials),
+        encryption_system: Arc::new(encryption_system),
     })
 }
 

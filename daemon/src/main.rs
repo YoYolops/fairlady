@@ -3,10 +3,7 @@ mod events;
 mod startup;
 
 use anyhow::Result;
-use commom::database::Database;
-use glifo::credentials;
 use startup::system_startup;
-use std::sync::Arc;
 use tokio::{self, sync::mpsc, task::JoinSet};
 
 pub struct WorkerID {
@@ -23,12 +20,8 @@ async fn main() -> Result<()> {
     // Create system wide needed data
     let system = system_startup().await?;
 
-    // Create arcs for sharing read-only data through multiple threads
-    let arc_credentials = Arc::new(system.credentials);
-    let arc_database = Arc::new(system.database);
-
-    let dispatcher_credentials = arc_credentials.clone();
-    let dispatcher_database = arc_database.clone();
+    let dispatcher_credentials = system.credentials.clone();
+    let dispatcher_database = system.database.clone();
 
     // Create channels for daemon's workers communications
     let (event_transmitter, event_receiver) = mpsc::channel(32);
