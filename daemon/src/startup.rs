@@ -1,14 +1,36 @@
 use anyhow::Result;
-use commom::constants::{SYSTEM_DATABASE_PATH, SYSTEM_FOREIGN_DATA_PATH, USER_DATA_FOLDER_PATH};
-use sqlx::SqlitePool;
+use commom::constants::{SYSTEM_DATABASE_PATH, SYSTEM_FOREIGN_DATA_PATH, USER_DATA_FOLDER_PATH, ENCRYPTION_ALGORITHM};
+use commom::database::Database;
+use glifo::credentials::{self, Credentials};
+use glifo::encrypter::CryptoAlgorithm;
+use sqlx::{SqlitePool};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use tokio::fs;
 
-pub async fn system_startup() -> Result<SqlitePool> {
+
+#[derive(Clone)]
+pub struct System {
+    pub database: Arc<Database>,
+    pub credentials: Arc<Credentials>,
+    pub encryption_system: Arc<CryptoAlgorithm>
+}
+
+pub async fn system_startup() -> Result<System> {
     fs::create_dir_all(SYSTEM_FOREIGN_DATA_PATH).await?; // ensures system folders existence
     fs::create_dir_all(USER_DATA_FOLDER_PATH).await?; // Ensures userdata default folder existence
-    let built_pool = init_db().await?;
-    Ok(built_pool)
+    let pool = init_db().await?;
+    let credentials = credentials::handle_credentials().await?;
+    let database = Database::build(Some(pool)).await?;
+    Ok(System {
+        database,
+        credentials,
+        encryption_system: match ENCRYPTION_ALGORITHM {
+            "aes" => CryptoAlgorithm::AES,
+            "chacha" => CryptoAlgorithm::ChaCha20,
+            "twofish" => CryptoAlgorithm::Twofish,
+            "serpent" => CryptoAlgorithm::Serpent
+        }
+    })
 }
 
 async fn init_db() -> Result<SqlitePool> {

@@ -9,7 +9,7 @@ use commom::{
     database::Database,
     ipfs_adapter::{self, Metadata},
 };
-use glifo::{credentials::Credentials, encrypter};
+use glifo::{credentials::Credentials, encrypter::{self, CryptoAlgorithm}};
 use notify::{
     Event,
     // EventKind::{
@@ -36,6 +36,7 @@ pub async fn event_dispatcher(
     mut event_receiver: Receiver<FairladyEvent>,
     credentials: Arc<Credentials>,
     database: Arc<Database>,
+    crypto_strategy: Arc<CryptoAlgorithm>
 ) -> Result<()> {
     // Responsible for dispatching system routines according to observed system events
     // It throttles fs events to prevent reading, encrypting, tarballing and uploading excessively.
@@ -56,6 +57,7 @@ pub async fn event_dispatcher(
                         scheduled_update_clone,
                         credentials_clone,
                         database_clone,
+                        crypto_strategy
                     )
                     .await;
                 } else {
@@ -72,6 +74,7 @@ async fn spawn_fs_event_handler(
     scheduled_update: Arc<AtomicBool>,
     credentials: Arc<Credentials>,
     database: Arc<Database>,
+    crypto_strategy: Arc<CryptoAlgorithm>
 ) {
     task::spawn(async move {
         match event.kind {
@@ -79,7 +82,7 @@ async fn spawn_fs_event_handler(
                 println!("---------- SCHEDULED STARTED ----------");
                 let _ = time::sleep(Duration::from_secs(WATCHER_REACTION_TIME_SECONDS)).await;
                 println!("SCHEDULED IS RUNNING");
-                let _ = encrypt_and_upload_system_data(&credentials, &database).await;
+                let _ = encrypt_and_upload_system_data(&credentials, &database, &crypto_strategy).await;
                 println!("SCHEDULED WAIT UPDATE TIME");
                 // This is essential. When fairlady stores data, it fires an FS event that is
                 // detected by the system, making it resend data to kubo, which fires another event
@@ -123,14 +126,16 @@ pub async fn decrypt_and_save_foreign_data(
             .context("ERROR while storing foreign data")?;
         return Ok(storage_result);
     }
-    bail!("ERROR: fairlady is unable to ")
+    println!("No data memory").
+    Ok(())
 }
 
 pub async fn encrypt_and_upload_system_data(
     system_credentials: &Credentials,
     database: &Database,
+    crypto_algo: &CryptoAlgorithm
 ) -> Result<()> {
-    if let Ok(data) = encrypter::encrypt_user_data(system_credentials).await {
+    if let Ok(data) = encrypter::encrypt_user_data(system_credentials, crypto_algo).await {
         let upload_metadata: Metadata = ipfs_adapter::upload_data_kubo(data).await?;
         println!("Kubo Response: {:#?}", upload_metadata);
         println!("Linking to MFS...");

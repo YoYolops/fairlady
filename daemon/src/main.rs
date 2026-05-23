@@ -21,13 +21,11 @@ pub enum FairladyEvent {
 #[tokio::main]
 async fn main() -> Result<()> {
     // Create system wide needed data
-    let pool = system_startup().await?;
-    let credentials = credentials::handle_credentials().await?;
-    let database = Database::build(Some(pool)).await?;
+    let system = system_startup().await?;
 
     // Create arcs for sharing read-only data through multiple threads
-    let arc_credentials = Arc::new(credentials);
-    let arc_database = Arc::new(database);
+    let arc_credentials = Arc::new(system.credentials);
+    let arc_database = Arc::new(system.database);
 
     let dispatcher_credentials = arc_credentials.clone();
     let dispatcher_database = arc_database.clone();
@@ -71,7 +69,8 @@ async fn main() -> Result<()> {
         let _ = events::dispatcher::event_dispatcher(
             event_receiver,
             dispatcher_credentials,
-            dispatcher_database.clone(),
+            dispatcher_database,
+            system.encryption_system
         )
         .await?;
         Ok(WorkerID {
