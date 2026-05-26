@@ -1,7 +1,8 @@
 use crate::constants::SYSTEM_DATABASE_PATH;
-use anyhow::{Context, Ok, Result};
+use anyhow::{Context, Result, bail};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::{self, FromRow, SqlitePool};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, FromRow)]
 struct HistoryDBRecord {
@@ -17,6 +18,13 @@ pub struct HistoryRecord {
 #[derive(Clone)]
 pub struct Database {
     pub pool: SqlitePool, // Implements Arc internally. Thread safe for reading.
+}
+
+pub struct PerformancePoint {
+    pub strategy: String,
+    pub init_timestamp: i64,
+    pub final_timestamp: i64,
+    pub operation: String,
 }
 
 impl Database {
@@ -62,5 +70,40 @@ impl Database {
             .await
             .context("FAILED inserting data into history")?;
         Ok(())
+    }
+
+    pub async fn add_perf_point(&self, perf_point: PerformancePoint) -> Result<()> {
+        sqlx::query(
+            "INSERT INTO perf_points (strategy, init_timestamp, final_timestamp, operation) VALUES (?, ?, ?, ?)")
+            .bind(perf_point.strategy)
+            .bind(perf_point.init_timestamp)
+            .bind(perf_point.final_timestamp)
+            .bind(perf_point.operation)
+            .execute(&self.pool)
+            .await
+            .context("FAILED inserting data into history")?;
+        Ok(())
+    }
+}
+
+impl PerformancePoint {
+    pub fn clock_in(&mut self) -> Result<()> {
+        match SystemTime::now().duration_since(UNIX_EPOCH) {
+            Ok(duration) => {
+                self.init_timestamp = duration.as_nanos() as i64;
+                Ok(())
+            },
+            Err(_) => bail!("Failed while getting unix timestamp for clock in")
+        }
+    }
+
+    pub fn clock_out(&mut self) -> Result<()> {
+        match SystemTime::now().duration_since(UNIX_EPOCH) {
+            Ok(duration) => {
+                self.final_timestamp = duration.as_nanos() as i64;
+                Ok(())
+            },
+            Err(_) => bail!("Failed while getting unix timestamp for clock out")
+        }
     }
 }

@@ -49,8 +49,21 @@ async fn init_db() -> Result<SqlitePool> {
         r#"
             CREATE TABLE IF NOT EXISTS upload_history (
                 cid TEXT PRIMARY KEY,
-                -- Stores the exact seconds since the Unix Epoch:
                 timestamp TEXT NOT NULL
+            );
+            "#,
+    )
+    .execute(&pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+            CREATE TABLE IF NOT EXISTS perf_points (
+                id INTEGER PRIMARY KEY,
+                strategy TEXT NOT NULL,
+                init_timestamp INTEGER NOT NULL,
+                final_timestamp INTEGER NOT NULL,
+                operation TEXT NOT NULL
             );
             "#,
     )
