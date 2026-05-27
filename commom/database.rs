@@ -2,8 +2,8 @@ use crate::constants::SYSTEM_DATABASE_PATH;
 use anyhow::{Context, Result, bail};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::{self, FromRow, SqlitePool};
-use std::time::{SystemTime, UNIX_EPOCH};
 use std::fmt;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, FromRow)]
 struct HistoryDBRecord {
@@ -23,7 +23,7 @@ pub struct Database {
 
 pub enum Operation {
     Encryption,
-    Decryption
+    Decryption,
 }
 
 pub struct PerformancePoint {
@@ -107,8 +107,8 @@ impl PerformancePoint {
             Ok(duration) => {
                 self.init_timestamp = Some(duration.as_nanos() as i64);
                 Ok(())
-            },
-            Err(_) => bail!("Failed while getting unix timestamp for clock in")
+            }
+            Err(_) => bail!("Failed while getting unix timestamp for clock in"),
         }
     }
 
@@ -117,8 +117,8 @@ impl PerformancePoint {
             Ok(duration) => {
                 self.final_timestamp = Some(duration.as_nanos() as i64);
                 Ok(())
-            },
-            Err(_) => bail!("Failed while getting unix timestamp for clock out")
+            }
+            Err(_) => bail!("Failed while getting unix timestamp for clock out"),
         }
     }
 }
