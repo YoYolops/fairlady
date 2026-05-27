@@ -3,6 +3,7 @@ use anyhow::{Context, Result, bail};
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::{self, FromRow, SqlitePool};
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::fmt;
 
 #[derive(Debug, FromRow)]
 struct HistoryDBRecord {
@@ -20,11 +21,25 @@ pub struct Database {
     pub pool: SqlitePool, // Implements Arc internally. Thread safe for reading.
 }
 
+pub enum Operation {
+    Encryption,
+    Decryption
+}
+
 pub struct PerformancePoint {
     pub strategy: String,
-    pub init_timestamp: i64,
-    pub final_timestamp: i64,
-    pub operation: String,
+    pub init_timestamp: Option<i64>,
+    pub final_timestamp: Option<i64>,
+    pub operation: Operation,
+}
+
+impl fmt::Display for Operation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Operation::Encryption => write!(f, "encryption"),
+            Operation::Decryption => write!(f, "decryption"),
+        }
+    }
 }
 
 impl Database {
@@ -78,7 +93,7 @@ impl Database {
             .bind(perf_point.strategy)
             .bind(perf_point.init_timestamp)
             .bind(perf_point.final_timestamp)
-            .bind(perf_point.operation)
+            .bind(perf_point.operation.to_string())
             .execute(&self.pool)
             .await
             .context("FAILED inserting data into history")?;
@@ -90,7 +105,7 @@ impl PerformancePoint {
     pub fn clock_in(&mut self) -> Result<()> {
         match SystemTime::now().duration_since(UNIX_EPOCH) {
             Ok(duration) => {
-                self.init_timestamp = duration.as_nanos() as i64;
+                self.init_timestamp = Some(duration.as_nanos() as i64);
                 Ok(())
             },
             Err(_) => bail!("Failed while getting unix timestamp for clock in")
@@ -100,7 +115,7 @@ impl PerformancePoint {
     pub fn clock_out(&mut self) -> Result<()> {
         match SystemTime::now().duration_since(UNIX_EPOCH) {
             Ok(duration) => {
-                self.final_timestamp = duration.as_nanos() as i64;
+                self.final_timestamp = Some(duration.as_nanos() as i64);
                 Ok(())
             },
             Err(_) => bail!("Failed while getting unix timestamp for clock out")

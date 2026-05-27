@@ -4,7 +4,14 @@ use std::path::PathBuf;
 use tar::Archive;
 use tokio::task;
 use crate::credentials::Credentials;
-use commom::{self, constants::SYSTEM_FOREIGN_DATA_PATH};
+use commom::{
+    self,
+    constants::SYSTEM_FOREIGN_DATA_PATH,
+    database::{
+        PerformancePoint,
+        Operation
+    }
+};
 use aes::Aes256;
 use chacha20::ChaCha20;
 use ctr::{
@@ -27,6 +34,19 @@ pub enum CryptoAlgorithm {
     Twofish,
 }
 
+impl std::fmt::Display for CryptoAlgorithm {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let stringy = match self {
+            CryptoAlgorithm::AES => "aes",
+            CryptoAlgorithm::ChaCha20=> "chacha",
+            CryptoAlgorithm::Serpent=> "serpent",
+            CryptoAlgorithm::Twofish=> "twofish",
+
+        };
+        write!(f, "{}", stringy)
+    }
+}
+
 async fn folder_to_tar_bytes(folder_path: PathBuf) -> Result<Vec<u8>> {
     let tar_result = task::spawn_blocking(move || -> Result<Vec<u8>> {
         let mut data: Vec<u8> = Vec::new();
@@ -47,106 +67,131 @@ pub async fn encrypt_user_data(
 ) -> Result<Vec<u8>> {
     let userdata_path = commom::info::get_userdata_path()?;
     let tar_data = folder_to_tar_bytes(userdata_path).await?;
+    let mut perf_point = PerformancePoint {
+        strategy: strategy.to_string(),
+        final_timestamp: None,
+        init_timestamp: None,
+        operation: Operation::Encryption,
+    };
     match strategy {
         CryptoAlgorithm::AES => {
             let aes_session_key = credentials.aes.as_ref();
-            Ok(encrypt_aes(aes_session_key, tar_data))
+            encrypt_aes(aes_session_key, tar_data, &mut perf_point)
         },
         CryptoAlgorithm::ChaCha20 => {
             let chacha_key = credentials.chacha.as_ref();
-            Ok(encrypt_chacha(chacha_key, tar_data))
+            encrypt_chacha(chacha_key, tar_data, &mut perf_point)
         },
         CryptoAlgorithm::Twofish => {
             let twofish_key = credentials.twofish.as_ref();
-            Ok(encrypt_twofish(twofish_key, tar_data))
+            encrypt_twofish(twofish_key, tar_data, &mut perf_point)
         },
         CryptoAlgorithm::Serpent => {
             let serpent_key = credentials.serpent.as_ref();
-            Ok(encrypt_serpent(serpent_key, tar_data))
+            encrypt_serpent(serpent_key, tar_data, &mut perf_point)
         },
     }
 }
 
-pub fn encrypt_aes(key: &[u8], mut data: Vec<u8>) -> Vec<u8> {
+pub fn encrypt_aes(key: &[u8], mut data: Vec<u8>, perf_point: &mut PerformancePoint) -> Result<Vec<u8>> {
     let mut nonce = [0u8; 16];
     let _ = OsRng.try_fill_bytes(&mut nonce);
     
     let mut cipher =
         Aes256Ctr::new_from_slices(key, &nonce).expect("Invalid key or nonce length for AES");
 
+    perf_point.clock_in()?;
     // Encrypt in place
     cipher.apply_keystream(&mut data);
+    perf_point.clock_out()?;
+
     data.splice(0..0, nonce);
 
-    data
+    Ok(data)
 }
 
-pub fn encrypt_chacha(key: &[u8], mut data: Vec<u8>) -> Vec<u8> {
+pub fn encrypt_chacha(key: &[u8], mut data: Vec<u8>, perf_point: &mut PerformancePoint) -> Result<Vec<u8>> {
     let mut nonce = [0u8; 12];
     let _ = OsRng.try_fill_bytes(&mut nonce);
 
     let mut cipher =
         ChaCha20::new_from_slices(key, &nonce).expect("Invalid key or nonce length for ChaCha20");
 
+    perf_point.clock_in()?;
+    // Encrypt in place
     cipher.apply_keystream(&mut data);
+    perf_point.clock_out()?;
 
     data.splice(0..0, nonce);
-    data
+    Ok(data)
 }
 
-fn encrypt_twofish(key: &[u8], mut data: Vec<u8>) -> Vec<u8> {
+fn encrypt_twofish(key: &[u8], mut data: Vec<u8>, perf_point: &mut PerformancePoint) -> Result<Vec<u8>> {
     let mut nonce = [0u8; 16];
     let _ = OsRng.try_fill_bytes(&mut nonce);
 
     let mut cipher =
         TwofishCtr::new_from_slices(key, &nonce).expect("Invalid key or nonce length for Twofish");
 
+    perf_point.clock_in()?;
+    // Encrypt in place
     cipher.apply_keystream(&mut data);
+    perf_point.clock_out()?;
 
     data.splice(0..0, nonce);
-    data
+    Ok(data)
 }
 
-fn encrypt_serpent(key: &[u8], mut data: Vec<u8>) -> Vec<u8> {
+fn encrypt_serpent(key: &[u8], mut data: Vec<u8>, perf_point: &mut PerformancePoint) -> Result<Vec<u8>> {
     let mut nonce = [0u8; 16];
     let _ = OsRng.try_fill_bytes(&mut nonce);
 
-    let valid_key = &key[..16]; // Remember Serpent needs exactly 16 bytes!
     let mut cipher =
-        SerpentCtr::new_from_slices(valid_key, &nonce).expect("Invalid key or nonce length for Serpent");
+        SerpentCtr::new_from_slices(key, &nonce).expect("Invalid key or nonce length for Serpent");
 
+    perf_point.clock_in()?;
+    // Encrypt in place
     cipher.apply_keystream(&mut data);
+    perf_point.clock_out()?;
 
     data.splice(0..0, nonce);
-    data
+    Ok(data)
 }
 
 pub async fn decrypt_foreign_data(
     credentials: &Credentials,
-    encrypted_payload: Vec<u8>, // Takes ownership of the downloaded data
+    encrypted_payload: Vec<u8>, 
     strategy: &CryptoAlgorithm,
-) -> Result<Vec<u8>> {          // Returns ownership to pass to the storage function
+) -> Result<Vec<u8>> {          
+    // Initialize performance point for decryption tracking
+    let mut perf_point = PerformancePoint {
+        strategy: strategy.to_string(),
+        final_timestamp: None,
+        init_timestamp: None,
+        operation: Operation::Decryption,
+    };
+
     match strategy {
         CryptoAlgorithm::AES => {
             let key = credentials.aes.as_ref();
-            decrypt_aes(key, encrypted_payload)
+            decrypt_aes(key, encrypted_payload, &mut perf_point)
         }
         CryptoAlgorithm::ChaCha20 => {
             let key = credentials.chacha.as_ref();
-            decrypt_chacha(key, encrypted_payload)
+            decrypt_chacha(key, encrypted_payload, &mut perf_point)
         }
         CryptoAlgorithm::Twofish => {
             let key = credentials.twofish.as_ref();
-            decrypt_twofish(key, encrypted_payload)
+            decrypt_twofish(key, encrypted_payload, &mut perf_point)
         }
         CryptoAlgorithm::Serpent => {
             let key = credentials.serpent.as_ref();
-            decrypt_serpent(key, encrypted_payload)
+            decrypt_serpent(key, encrypted_payload, &mut perf_point)
         }
     }
 }
 
-fn decrypt_aes(key: &[u8], mut payload: Vec<u8>) -> Result<Vec<u8>> {
+fn decrypt_aes(key: &[u8], mut payload: Vec<u8>, perf_point: &mut PerformancePoint) -> Result<Vec<u8>> {
     if payload.len() < 16 {
         bail!("Payload is too short to contain a valid AES nonce");
     }
@@ -157,15 +202,17 @@ fn decrypt_aes(key: &[u8], mut payload: Vec<u8>) -> Result<Vec<u8>> {
     let mut cipher = Aes256Ctr::new_from_slices(key, &nonce)
         .map_err(|_| anyhow!("Invalid AES key or nonce length"))?;
         
+    perf_point.clock_in()?;
     // Decrypt directly into the ciphertext slice
     cipher.apply_keystream(&mut payload[16..]);
+    perf_point.clock_out()?;
     
     // Drop the nonce, sliding the plaintext to the front
     payload.drain(..16);
     Ok(payload)
 }
 
-fn decrypt_chacha(key: &[u8], mut payload: Vec<u8>) -> Result<Vec<u8>> {
+fn decrypt_chacha(key: &[u8], mut payload: Vec<u8>, perf_point: &mut PerformancePoint) -> Result<Vec<u8>> {
     if payload.len() < 12 {
         bail!("Payload is too short to contain a valid ChaCha nonce");
     }
@@ -176,12 +223,15 @@ fn decrypt_chacha(key: &[u8], mut payload: Vec<u8>) -> Result<Vec<u8>> {
     let mut cipher = ChaCha20::new_from_slices(key, &nonce)
         .map_err(|_| anyhow!("Invalid ChaCha key or nonce length"))?;
 
+    perf_point.clock_in()?;
     cipher.apply_keystream(&mut payload[12..]);
+    perf_point.clock_out()?;
+
     payload.drain(..12);
     Ok(payload)
 }
 
-fn decrypt_twofish(key: &[u8], mut payload: Vec<u8>) -> Result<Vec<u8>> {
+fn decrypt_twofish(key: &[u8], mut payload: Vec<u8>, perf_point: &mut PerformancePoint) -> Result<Vec<u8>> {
     if payload.len() < 16 {
         bail!("Payload is too short to contain a valid Twofish nonce");
     }
@@ -192,12 +242,15 @@ fn decrypt_twofish(key: &[u8], mut payload: Vec<u8>) -> Result<Vec<u8>> {
     let mut cipher = TwofishCtr::new_from_slices(key, &nonce)
         .map_err(|_| anyhow!("Invalid Twofish key or nonce length"))?;
 
+    perf_point.clock_in()?;
     cipher.apply_keystream(&mut payload[16..]);
+    perf_point.clock_out()?;
+
     payload.drain(..16);
     Ok(payload)
 }
 
-fn decrypt_serpent(key: &[u8], mut payload: Vec<u8>) -> Result<Vec<u8>> {
+fn decrypt_serpent(key: &[u8], mut payload: Vec<u8>, perf_point: &mut PerformancePoint) -> Result<Vec<u8>> {
     if payload.len() < 16 {
         bail!("Payload is too short to contain a valid Serpent nonce");
     }
@@ -205,13 +258,13 @@ fn decrypt_serpent(key: &[u8], mut payload: Vec<u8>) -> Result<Vec<u8>> {
     let mut nonce = [0u8; 16];
     nonce.copy_from_slice(&payload[..16]);
 
-    // Serpent expects exactly 16 bytes for the key
-    let valid_key = &key[..16];
-
-    let mut cipher = SerpentCtr::new_from_slices(valid_key, &nonce)
+    let mut cipher = SerpentCtr::new_from_slices(key, &nonce)
         .map_err(|_| anyhow!("Invalid Serpent key or nonce length"))?;
 
+    perf_point.clock_in()?;
     cipher.apply_keystream(&mut payload[16..]);
+    perf_point.clock_out()?;
+
     payload.drain(..16);
     Ok(payload)
 }

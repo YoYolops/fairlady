@@ -16,16 +16,17 @@ you own it.
 ### TO DO:
 1. ✅ DONE: Create a function to check if credentials are already created inside ./data;
 2. ✅ DONE: Create a function to store created credentials inside ./data
-3. 🟣 FROZEN DUE TO IRRELEVANCE FOR NOW: Build strategy to dinamically get the latest data
+3. 🔴 FROZEN DUE TO IRRELEVANCE FOR NOW: Build strategy to dinamically get the latest data
 4. ✅ Create folder watcher
 5. ✅ build CLI
-6. 🟡 Extend glifo with chacha20-poly1305
-7. 🟡 Extend glifo with two-fish
-8. 🟡 Extend glifo with serpent
+6. ✅ Extend glifo with chacha20-poly1305
+7. ✅ Extend glifo with two-fish
+8. ✅ Extend glifo with serpent
 
 🟡 pending
 ✅ done
 🟣 frozen
+🔴 a (very) hard problem
 
 
 ### To be known:
