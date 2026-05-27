@@ -152,16 +152,27 @@ pub async fn encrypt_and_upload_system_data(
     database: &Database,
     crypto_algo: &CryptoAlgorithm,
 ) -> Result<()> {
-    if let Ok(data) = encrypter::encrypt_user_data(system_credentials, crypto_algo).await {
-        let upload_metadata: Metadata = ipfs_adapter::upload_data_kubo(data).await?;
+    if let Ok(encryption_result) =
+        encrypter::encrypt_user_data(system_credentials, crypto_algo).await
+    {
+        let upload_metadata: Metadata =
+            ipfs_adapter::upload_data_kubo(encryption_result.data).await?;
         println!("Kubo Response: {:#?}", upload_metadata);
         println!("Linking to MFS...");
         ipfs_adapter::delete_previous_link(&format!("/{}", KUBO_DEFAULT_MFS_DESTINATION_PATH))
             .await?;
         ipfs_adapter::link_data_to_kubo_mfs(&upload_metadata.cid, &upload_metadata.name).await?;
+        println!("Adding to history...");
         database
             .add_to_history(&upload_metadata.cid, &upload_metadata.timestamp_nsecs)
             .await?;
+        match encryption_result.perf_point {
+            Some(perf_point) => {
+                println!("Adding performance point...");
+                database.add_perf_point(perf_point).await?;
+            }
+            None => println!("No performance point provided"),
+        }
         println!("Done!");
     } else {
         eprintln!("Error encrypting data");

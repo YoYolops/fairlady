@@ -23,6 +23,11 @@ type Aes256Ctr = Ctr128BE<Aes256>;
 type SerpentCtr = Ctr128BE<Serpent>;
 type TwofishCtr = Ctr128BE<Twofish>;
 
+pub struct EncryptionResult {
+    pub data: Vec<u8>,
+    pub perf_point: Option<PerformancePoint>,
+}
+
 #[derive(Debug)]
 pub enum CryptoAlgorithm {
     AES,
@@ -60,7 +65,7 @@ async fn folder_to_tar_bytes(folder_path: PathBuf) -> Result<Vec<u8>> {
 pub async fn encrypt_user_data(
     credentials: &Credentials,
     strategy: &CryptoAlgorithm,
-) -> Result<Vec<u8>> {
+) -> Result<EncryptionResult> {
     let userdata_path = commom::info::get_userdata_path()?;
     let tar_data = folder_to_tar_bytes(userdata_path).await?;
     let mut perf_point = PerformancePoint {
@@ -72,19 +77,31 @@ pub async fn encrypt_user_data(
     match strategy {
         CryptoAlgorithm::AES => {
             let aes_session_key = credentials.aes.as_ref();
-            encrypt_aes(aes_session_key, tar_data, &mut perf_point)
+            Ok(EncryptionResult {
+                data: encrypt_chacha(aes_session_key, tar_data, &mut perf_point)?,
+                perf_point: Some(perf_point),
+            })
         }
         CryptoAlgorithm::ChaCha20 => {
             let chacha_key = credentials.chacha.as_ref();
-            encrypt_chacha(chacha_key, tar_data, &mut perf_point)
+            Ok(EncryptionResult {
+                data: encrypt_chacha(chacha_key, tar_data, &mut perf_point)?,
+                perf_point: Some(perf_point),
+            })
         }
         CryptoAlgorithm::Twofish => {
             let twofish_key = credentials.twofish.as_ref();
-            encrypt_twofish(twofish_key, tar_data, &mut perf_point)
+            Ok(EncryptionResult {
+                data: encrypt_twofish(twofish_key, tar_data, &mut perf_point)?,
+                perf_point: Some(perf_point),
+            })
         }
         CryptoAlgorithm::Serpent => {
             let serpent_key = credentials.serpent.as_ref();
-            encrypt_serpent(serpent_key, tar_data, &mut perf_point)
+            Ok(EncryptionResult {
+                data: encrypt_serpent(serpent_key, tar_data, &mut perf_point)?,
+                perf_point: Some(perf_point),
+            })
         }
     }
 }
