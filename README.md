@@ -22,6 +22,7 @@ you own it.
 6. ✅ Extend glifo with chacha20-poly1305
 7. ✅ Extend glifo with two-fish
 8. ✅ Extend glifo with serpent
+9. 🟡 compact data before sendingo to kubo (compact then encrypt or encrypt then compact?)
 
 🟡 pending
 ✅ done
