@@ -35,3 +35,4 @@ services:
       - CARGO_TARGET_DIR=/usr/src/fairlady/target_docker
     depends_on:
       - kubo_node
+      
