@@ -39,7 +39,7 @@ def connect_to_database():
 
 def get_performance_points(connection):
     cursor = connection.cursor()
-    cursor.execute("SELECT id, strategy, init_timestamp, final_timestamp, operation FROM perf_points;")
+    cursor.execute("SELECT * FROM perf_points;")
     
     rows = cursor.fetchall()
     column_names = [description[0] for description in cursor.description]

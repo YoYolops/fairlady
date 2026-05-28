@@ -43,14 +43,10 @@ pub async fn event_dispatcher(
     // Responsible for dispatching system routines according to observed system events
     // It throttles fs events to prevent reading, encrypting, tarballing and uploading excessively.
     let scheduled_update: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-    let mut event_counter: u128 = 0;
     while let Some(event) = event_receiver.recv().await {
         let credentials_clone = credentials.clone();
         let database_clone = database.clone();
         let crypto_strategy_clone = crypto_strategy.clone();
-
-        // event_counter+=1;
-        // print!("E-{}    ", event_counter);
 
         match event {
             CLI(user_input) => {

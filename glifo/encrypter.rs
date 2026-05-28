@@ -79,7 +79,7 @@ pub async fn encrypt_user_data(
         CryptoAlgorithm::AES => {
             let aes_session_key = credentials.aes.as_ref();
             Ok(EncryptionResult {
-                data: encrypt_chacha(aes_session_key, tar_data, &mut perf_point)?,
+                data: encrypt_aes(aes_session_key, tar_data, &mut perf_point)?,
                 perf_point: Some(perf_point),
             })
         }

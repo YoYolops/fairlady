@@ -11,6 +11,7 @@ struct HistoryDBRecord {
     pub timestamp: String,
 }
 
+#[derive(Debug)]
 pub struct HistoryRecord {
     pub cid: String,
     pub timestamp: u128,
@@ -90,7 +91,7 @@ impl Database {
 
     pub async fn add_perf_point(&self, perf_point: PerformancePoint) -> Result<()> {
         sqlx::query(
-            "INSERT INTO perf_points (strategy, init_timestamp, final_timestamp, operation, payload_size) VALUES (?, ?, ?, ?)")
+            "INSERT INTO perf_points (strategy, init_timestamp, final_timestamp, operation, payload_size) VALUES (?, ?, ?, ?, ?)")
             .bind(perf_point.strategy)
             .bind(perf_point.init_timestamp)
             .bind(perf_point.final_timestamp)
