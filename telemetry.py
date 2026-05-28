@@ -1,6 +1,7 @@
 import os
 import re
 import sqlite3
+import matplotlib
 
 _FAIRLADY_CONSTANTS_FILE_PATH = os.path.abspath("./commom/constants.rs")
 

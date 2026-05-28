@@ -73,6 +73,7 @@ pub async fn encrypt_user_data(
         final_timestamp: None,
         init_timestamp: None,
         operation: Operation::Encryption,
+        payload_size: tar_data.len() as i64,
     };
     match strategy {
         CryptoAlgorithm::AES => {
@@ -198,6 +199,7 @@ pub async fn decrypt_foreign_data(
         final_timestamp: None,
         init_timestamp: None,
         operation: Operation::Decryption,
+        payload_size: encrypted_payload.len() as i64,
     };
 
     match strategy {

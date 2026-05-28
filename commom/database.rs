@@ -31,6 +31,7 @@ pub struct PerformancePoint {
     pub init_timestamp: Option<i64>,
     pub final_timestamp: Option<i64>,
     pub operation: Operation,
+    pub payload_size: i64,
 }
 
 impl fmt::Display for Operation {
@@ -89,14 +90,15 @@ impl Database {
 
     pub async fn add_perf_point(&self, perf_point: PerformancePoint) -> Result<()> {
         sqlx::query(
-            "INSERT INTO perf_points (strategy, init_timestamp, final_timestamp, operation) VALUES (?, ?, ?, ?)")
+            "INSERT INTO perf_points (strategy, init_timestamp, final_timestamp, operation, payload_size) VALUES (?, ?, ?, ?)")
             .bind(perf_point.strategy)
             .bind(perf_point.init_timestamp)
             .bind(perf_point.final_timestamp)
             .bind(perf_point.operation.to_string())
+            .bind(perf_point.payload_size)
             .execute(&self.pool)
             .await
-            .context("FAILED inserting data into history")?;
+            .context("FAILED inserting data into performance point")?;
         Ok(())
     }
 }

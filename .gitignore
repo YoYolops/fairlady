@@ -8,9 +8,9 @@
 # Ignores local environment variable files.
 .env
 .env.*
+.venv
 
 # Added by cargo
-
 /target
 /target_docker
 

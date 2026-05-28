@@ -63,7 +63,8 @@ async fn init_db() -> Result<SqlitePool> {
                 strategy TEXT NOT NULL,
                 init_timestamp INTEGER NOT NULL,
                 final_timestamp INTEGER NOT NULL,
-                operation TEXT NOT NULL
+                operation TEXT NOT NULL,
+                payload_size INTEGER NOT NULL
             );
             "#,
     )
