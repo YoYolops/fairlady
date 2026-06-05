@@ -3,6 +3,15 @@
 # Exit the shell script immediately if any command fails midway
 set -e
 
+# --- Make data generator executable by any user ---
+if [ -f "./generate_data.sh" ]; then
+    chmod a+x ./generate_data.sh
+else
+    echo "ERROR: './generate_data.sh' was not found in this directory." >&2
+    echo "Please ensure the file exists before running the launcher." >&2
+    exit 1
+fi
+
 echo "============================================="
 echo "  Fairlady Telemetry Automation Launcher"
 echo "============================================="

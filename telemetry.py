@@ -1,11 +1,15 @@
 import os
 import re
+import time
 import sqlite3
+import subprocess
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 _FAIRLADY_CONSTANTS_FILE_PATH = os.path.abspath("./commom/constants.rs")
+_TELEMETRY_CYCLES = 100
+_FILE_SIZES = [0.1, 0.5, 1, 2, 5, 10]
 
 def parse_constants():
     with open(_FAIRLADY_CONSTANTS_FILE_PATH) as file:
@@ -76,7 +80,6 @@ def plot_telemetry_data(data):
     df = pd.DataFrame(data)
     processed_df = preprocess_telemetry_dataframe(df)
     plot_encryption_performance(processed_df)
-    print(df.head())
 
 def plot_encryption_performance(preprocessed_dataframe):
     _, ax = plt.subplots(figsize=(10, 6))
@@ -108,7 +111,7 @@ def plot_encryption_performance(preprocessed_dataframe):
     
     # Save the output image
     plt.savefig('encryption_performance_ns.png', dpi=300)
-    print("Plot successfully generated and saved as 'encryption_performance_ns.png'.")
+    print("Encryption scatter plot successfully generated and saved as 'encryption_performance_ns.png'.")
 
 def main():
     global constants
@@ -120,12 +123,33 @@ def main():
     if 'perf_points' not in db['tables']:
         raise Exception("FAILED: did not find any perf_points table")
     
+    custom_env = os.environ.copy()
+    for i in range(_TELEMETRY_CYCLES):
+        print()
+        print(f"\033[94mCYCLE: {i}\033[0m - ", end="")
+        custom_env['FILE_SIZE_GB'] = str(_FILE_SIZES[i%len(_FILE_SIZES)])
+        try:
+            # Run the script and check for errors
+            subprocess.run(
+                "./generate_data.sh",
+                env=custom_env,    # Passes the FILE_SIZE_GB variable
+                check=True,         # Throws Python error if the Bash script exits with an error code
+                text=True           # Ensures stdout/stderr are read as strings if captured
+            )
+        except subprocess.CalledProcessError as e:
+            raise Exception(f"Data generation shell script crashed! Exit code: {e.returncode}")
+        except FileNotFoundError:
+            raise Exception("The script './generate_data.sh' was not found or is not executable.")
+        sleep_time = int(_FILE_SIZES[i%len(_FILE_SIZES)]*10)
+        print(f"Letting fairlady react for {sleep_time}s")
+        time.sleep(sleep_time)
+    print("=============================================")
+    print()
     performance_points = get_performance_points(db['connection'])
-    for i in performance_points:
-        print(i)
+    print(performance_points[0])
     print(strategies_telemetry(performance_points))
     plot_telemetry_data(performance_points)
-
     db['connection'].close()
+    print("So Long, and Thanks for All the Fish!")
 
 main()

@@ -3,8 +3,14 @@ mod events;
 mod startup;
 
 use anyhow::Result;
+use commom::constants::FOREIGN_DATA_DOWNLOAD_TICK_TIME_SECONDS;
 use startup::system_startup;
-use tokio::{self, sync::mpsc, task::JoinSet};
+use tokio::{
+    self,
+    sync::mpsc,
+    task::JoinSet,
+    time::{Duration, sleep},
+};
 
 pub struct WorkerID {
     pub name: String,
@@ -69,6 +75,17 @@ async fn main() -> Result<()> {
         Ok(WorkerID {
             name: String::from("FS_Dispatcher"),
         })
+    });
+
+    let download_ticker_transmitter = event_transmitter.clone();
+    task_set.spawn(async move {
+        // This tasks mimics a cli event to fire a foreign data download
+        loop {
+            sleep(Duration::from_secs(FOREIGN_DATA_DOWNLOAD_TICK_TIME_SECONDS)).await;
+            download_ticker_transmitter
+                .send(FairladyEvent::CLI(String::from("d")))
+                .await?;
+        }
     });
 
     // Main workers monitoring

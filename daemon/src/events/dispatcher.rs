@@ -128,15 +128,23 @@ pub async fn decrypt_and_save_foreign_data(
     crypto_strategy: &CryptoAlgorithm,
 ) -> Result<()> {
     if let Some(record) = database.get_last_history_record().await? {
-        let mut data = ipfs_adapter::download_foreign_data(&record.cid)
+        let data = ipfs_adapter::download_foreign_data(&record.cid)
             .await
             .context("ERROR while downloading foreign data")?;
-        data = encrypter::decrypt_foreign_data(credentials, data, crypto_strategy)
+        let decryption_result = encrypter::decrypt_foreign_data(credentials, data, crypto_strategy)
             .await
             .context("ERROR while decrypting foreign data")?;
-        let storage_result = encrypter::store_foreign_data(data)
+        match decryption_result.perf_point {
+            Some(perf_point) => {
+                println!("Adding decryption performance point...");
+                database.add_perf_point(perf_point).await?;
+            }
+            None => println!("No performance point provided"),
+        };
+        let storage_result = encrypter::store_foreign_data(decryption_result.data)
             .await
             .context("ERROR while storing foreign data")?;
+
         return Ok(storage_result);
     }
     println!("No data memory");
@@ -164,7 +172,7 @@ pub async fn encrypt_and_upload_system_data(
             .await?;
         match encryption_result.perf_point {
             Some(perf_point) => {
-                println!("Adding performance point...");
+                println!("Adding encryption performance point...");
                 database.add_perf_point(perf_point).await?;
             }
             None => println!("No performance point provided"),
