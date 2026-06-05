@@ -25,14 +25,11 @@ use notify::{
     //     Remove
     // }
 };
-use std::{
-    sync::{
-        Arc,
-        atomic::{AtomicBool, Ordering},
-    },
-    time::Duration,
+use std::{sync::Arc, time::Duration};
+use tokio::{
+    sync::{OwnedSemaphorePermit, Semaphore, mpsc::Receiver},
+    task, time,
 };
-use tokio::{sync::mpsc::Receiver, task, time};
 
 pub async fn event_dispatcher(
     mut event_receiver: Receiver<FairladyEvent>,
@@ -42,12 +39,11 @@ pub async fn event_dispatcher(
 ) -> Result<()> {
     // Responsible for dispatching system routines according to observed system events
     // It throttles fs events to prevent reading, encrypting, tarballing and uploading excessively.
-    let scheduled_update: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
-    let is_download_running: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+    let upload_semaphore: Arc<Semaphore> = Arc::new(Semaphore::new(1));
+    let download_semaphore: Arc<Semaphore> = Arc::new(Semaphore::new(1));
     let mut event_counter: u128 = 0;
     while let Some(event) = event_receiver.recv().await {
         event_counter += 1;
-
         if event_counter % 100 == 0 {
             println!(
                 "\x1b[34m ~ Fairlady handled {} events already \x1b[0m",
@@ -61,14 +57,12 @@ pub async fn event_dispatcher(
 
         match event {
             CLI(user_input) => {
-                let was_download_already_running = is_download_running.swap(true, Ordering::Acquire);
-                if !was_download_already_running { 
-                    // The only cli event implemented is the dowload request, 
-                    // so this is, essentially, a download throttling 
-                    let is_download_running_clone = is_download_running.clone();
+                // try_acquire_owned() immediately gets a permit if available,
+                // returning Err if the limit (1) is already reached.
+                if let Ok(permit) = download_semaphore.clone().try_acquire_owned() {
                     spawn_cli_event_handler(
                         user_input,
-                        is_download_running_clone,
+                        permit, // Pass the permit to the task
                         credentials_clone,
                         database_clone,
                         crypto_strategy_clone,
@@ -77,13 +71,13 @@ pub async fn event_dispatcher(
                 }
             }
             FS(event) => {
-                let was_already_scheduled = scheduled_update.swap(true, Ordering::Acquire);
-                if !was_already_scheduled {
-                    let scheduled_update_clone = scheduled_update.clone();
+                // If a permit is available, grab it. If not, it means an update
+                // is already scheduled or currently running, so we safely ignore this event.
+                if let Ok(permit) = upload_semaphore.clone().try_acquire_owned() {
                     println!("SPAWNING FS EVENT HANDLER:");
                     spawn_fs_event_handler(
                         event,
-                        scheduled_update_clone,
+                        permit, // Pass the permit to the handler
                         credentials_clone,
                         database_clone,
                         crypto_strategy_clone,
@@ -98,16 +92,17 @@ pub async fn event_dispatcher(
 
 async fn spawn_fs_event_handler(
     event: Event,
-    scheduled_update: Arc<AtomicBool>,
+    _permit: OwnedSemaphorePermit,
     credentials: Arc<Credentials>,
     database: Arc<Database>,
     crypto_strategy: Arc<CryptoAlgorithm>,
 ) {
     task::spawn(async move {
+        let _permit_guard = _permit;
         match event.kind {
             _ => {
                 println!("---------- SCHEDULED STARTED ----------");
-                let _ = time::sleep(Duration::from_secs(WATCHER_REACTION_TIME_SECONDS)).await;
+                time::sleep(Duration::from_secs(WATCHER_REACTION_TIME_SECONDS)).await;
                 println!("SCHEDULED IS RUNNING");
                 let _ =
                     encrypt_and_upload_system_data(&credentials, &database, &crypto_strategy).await;
@@ -115,22 +110,22 @@ async fn spawn_fs_event_handler(
                 // This is essential. When fairlady stores data, it fires an FS event that is
                 // detected by the system, making it resend data to kubo, which fires another event
                 // that also makes fairlady send data to kubo and so on forever.
-                let _ = time::sleep(Duration::from_secs(USERDATA_UPDATE_TIME_SECONDS)).await;
+                time::sleep(Duration::from_secs(USERDATA_UPDATE_TIME_SECONDS)).await;
                 println!("---------- SCHEDULED FINISHED ----------");
             }
         };
-        scheduled_update.swap(false, Ordering::Release);
     });
 }
 
 async fn spawn_cli_event_handler(
     user_input: String,
-    is_download_running: Arc<AtomicBool>,
+    _permit: OwnedSemaphorePermit, // It sits here until the task ends, when will be droped and released as a consequence
     credentials: Arc<Credentials>,
     database: Arc<Database>,
     crypto_strategy: Arc<CryptoAlgorithm>,
 ) {
     tokio::spawn(async move {
+        let _permit_guard = _permit; // Effectively move permit to inside the task
         match user_input.as_ref() {
             "d" => {
                 let _ =
@@ -138,7 +133,8 @@ async fn spawn_cli_event_handler(
             }
             _ => println!("Unknown cli command"),
         };
-        is_download_running.swap(false, Ordering::Release);
+        // No manual _permit release needed!
+        // When this async block ends (or panics), `_permit` is dropped automatically.
     });
 }
 
