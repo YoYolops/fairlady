@@ -5,10 +5,10 @@ pub const SYSTEM_FOREIGN_DATA_PATH: &str = "./.fairlady/foreign";
 pub const SYSTEM_DATABASE_PATH: &str = "./.fairlady/fairlady.db";
 
 // fairlady behavior params
-pub const USERDATA_UPDATE_TIME_SECONDS: u64 = 2; // blocks data updates for x seconds after any previous on
-pub const WATCHER_REACTION_TIME_SECONDS: u64 = 2; // After an event is detected of user's data folder, how many time to wait before uploading it
-pub const ENCRYPTION_ALGORITHM: &str = "chacha"; // either: aes, serpent, twofish, chacha
-pub const FOREIGN_DATA_DOWNLOAD_TICK_TIME_SECONDS: u64 = 10; // After this given amount of time, fairlady will download foreign data
+pub const USERDATA_UPDATE_TIME_SECONDS: u64 = 1; // blocks data updates for x seconds after any previous data uploads
+pub const WATCHER_REACTION_TIME_SECONDS: u64 = 5; // After an event is detected in user's data folder, how many time to wait before uploading it
+pub const ENCRYPTION_ALGORITHM: &str = "aes"; // either: aes, serpent, twofish, chacha
+pub const FOREIGN_DATA_DOWNLOAD_TICK_TIME_SECONDS: u64 = 30; // After this given amount of time, fairlady will download foreign data
 
 // IPFS related
 pub const KUBO_RPC_BASE_URL: &str = "http://kubo_node:5001/api/v0";

@@ -10,11 +10,9 @@ OUTPUT_FILE="$OUTPUT_DIR/file_${SIZE_GB}gb.not_txt"
 BLOCK_SIZE_MB=4
 
 # --- Clear the directory if it exists, then create it fresh ---
-if [ -d "$OUTPUT_DIR" ]; then
-    echo "Clearing old benchmark files from $OUTPUT_DIR..."
-    rm -rf "$OUTPUT_DIR"
-fi
 mkdir -p "$OUTPUT_DIR"
+echo "Clearing old benchmark files from $OUTPUT_DIR..."
+rm -f "$OUTPUT_DIR"/*
 
 
 # Use awk to handle floating-point math safely

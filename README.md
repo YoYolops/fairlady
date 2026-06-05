@@ -23,7 +23,7 @@ you own it.
 7.  ✅ Extend glifo with two-fish
 8.  ✅ Extend glifo with serpent
 9.  🟡 compact data before sendingo to kubo (compact then encrypt or encrypt then compact?)
-10. 🟡 Fire download event at every given amount of time
+10. ✅ Fire download event at every given amount of time
 
 🟡 pending
 ✅ done

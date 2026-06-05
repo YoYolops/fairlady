@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 
 _FAIRLADY_CONSTANTS_FILE_PATH = os.path.abspath("./commom/constants.rs")
-_TELEMETRY_CYCLES = 100
-_FILE_SIZES = [0.1, 0.5, 1, 2, 5, 10]
+_PLOTS_OUTPUT_FOLDER = os.path.abspath("./docs")
+_TELEMETRY_CYCLES = 30
+_FILE_SIZES = [0.1, 0.5, 1, 2, 3, 4]
 
 def parse_constants():
     with open(_FAIRLADY_CONSTANTS_FILE_PATH) as file:
@@ -110,7 +111,7 @@ def plot_encryption_performance(preprocessed_dataframe):
     plt.tight_layout()
     
     # Save the output image
-    plt.savefig('encryption_performance_ns.png', dpi=300)
+    plt.savefig(os.path.join(_PLOTS_OUTPUT_FOLDER, 'encryption_performance_ns.png'), dpi=300)
     print("Encryption scatter plot successfully generated and saved as 'encryption_performance_ns.png'.")
 
 def main():
@@ -126,7 +127,7 @@ def main():
     custom_env = os.environ.copy()
     for i in range(_TELEMETRY_CYCLES):
         print()
-        print(f"\033[94mCYCLE: {i}\033[0m - ", end="")
+        print(f"\033[94mCYCLE: {i+1}/{_TELEMETRY_CYCLES}\033[0m - ", end="")
         custom_env['FILE_SIZE_GB'] = str(_FILE_SIZES[i%len(_FILE_SIZES)])
         try:
             # Run the script and check for errors
@@ -140,9 +141,11 @@ def main():
             raise Exception(f"Data generation shell script crashed! Exit code: {e.returncode}")
         except FileNotFoundError:
             raise Exception("The script './generate_data.sh' was not found or is not executable.")
-        sleep_time = int(_FILE_SIZES[i%len(_FILE_SIZES)]*10)
+        sleep_time = int(_FILE_SIZES[i%len(_FILE_SIZES)]*20)
+        sleep_time = sleep_time if sleep_time > 40 else 40
         print(f"Letting fairlady react for {sleep_time}s")
         time.sleep(sleep_time)
+
     print("=============================================")
     print()
     performance_points = get_performance_points(db['connection'])

@@ -43,20 +43,38 @@ pub async fn event_dispatcher(
     // Responsible for dispatching system routines according to observed system events
     // It throttles fs events to prevent reading, encrypting, tarballing and uploading excessively.
     let scheduled_update: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+    let is_download_running: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+    let mut event_counter: u128 = 0;
     while let Some(event) = event_receiver.recv().await {
+        event_counter += 1;
+
+        if event_counter % 100 == 0 {
+            println!(
+                "\x1b[34m ~ Fairlady handled {} events already \x1b[0m",
+                event_counter
+            );
+        }
+
         let credentials_clone = credentials.clone();
         let database_clone = database.clone();
         let crypto_strategy_clone = crypto_strategy.clone();
 
         match event {
             CLI(user_input) => {
-                spawn_cli_event_handler(
-                    user_input,
-                    credentials_clone,
-                    database_clone,
-                    crypto_strategy_clone,
-                )
-                .await;
+                let was_download_already_running = is_download_running.swap(true, Ordering::Acquire);
+                if !was_download_already_running { 
+                    // The only cli event implemented is the dowload request, 
+                    // so this is, essentially, a download throttling 
+                    let is_download_running_clone = is_download_running.clone();
+                    spawn_cli_event_handler(
+                        user_input,
+                        is_download_running_clone,
+                        credentials_clone,
+                        database_clone,
+                        crypto_strategy_clone,
+                    )
+                    .await;
+                }
             }
             FS(event) => {
                 let was_already_scheduled = scheduled_update.swap(true, Ordering::Acquire);
@@ -107,6 +125,7 @@ async fn spawn_fs_event_handler(
 
 async fn spawn_cli_event_handler(
     user_input: String,
+    is_download_running: Arc<AtomicBool>,
     credentials: Arc<Credentials>,
     database: Arc<Database>,
     crypto_strategy: Arc<CryptoAlgorithm>,
@@ -119,6 +138,7 @@ async fn spawn_cli_event_handler(
             }
             _ => println!("Unknown cli command"),
         };
+        is_download_running.swap(false, Ordering::Release);
     });
 }
 

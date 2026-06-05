@@ -16,9 +16,9 @@ ipfs config --json Gateway.HTTPHeaders.Access-Control-Allow-Methods '["GET"]'
 ipfs config Datastore.StorageMax "10GB"
 
 # If disk usage hits 90% of StorageMax, GC is triggered.
-ipfs config Datastore.StorageGCWatermark 90
+ipfs config --json Datastore.StorageGCWatermark 90
 
 # How frequently the background daemon checks the storage size
-ipfs config Datastore.GCPeriod "1h"
+ipfs config Datastore.GCPeriod "1m"
 
 echo "Custom configurations applied successfully."
